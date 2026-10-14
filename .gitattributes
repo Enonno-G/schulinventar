@@ -1,0 +1,2 @@
+# Einheitliche Zeilenenden (LF) auf Windows und im Docker-Container
+* text=auto eol=lf

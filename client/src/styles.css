@@ -1,0 +1,553 @@
+/* Einfache, gut lesbare Oberfläche für PC, Tablet und Handy (Pflichtenheft Kap. 5) */
+
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --text: #1b2430;
+  --muted: #5a6574;
+  --border: #d5dbe3;
+  --primary: #1f5fa8;
+  --primary-hover: #184d8a;
+  --primary-soft: #e8f0fa;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --success: #1e7b3c;
+  --success-soft: #e7f5ec;
+  --radius: 8px;
+  --focus-ring: 0 0 0 3px rgba(31, 95, 168, 0.35);
+
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0 0 0.75rem;
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.75rem;
+}
+
+a {
+  color: var(--primary);
+}
+
+/* ---------- Grundgerüst ---------- */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.6rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.user-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  font-size: 0.9rem;
+}
+
+.user-name small {
+  color: var(--muted);
+}
+
+.mainnav {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+
+.mainnav a {
+  padding: 0.6rem 0.8rem;
+  white-space: nowrap;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+}
+
+.mainnav a:hover {
+  color: var(--text);
+}
+
+.mainnav a.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+}
+
+.footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  padding: 1rem;
+}
+
+.page.narrow {
+  max-width: 480px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.breadcrumb {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0 0 0.25rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 0 1rem;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* ---------- Texte und Meldungen ---------- */
+
+.muted {
+  color: var(--muted);
+}
+
+.prewrap {
+  white-space: pre-wrap;
+}
+
+.error {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+}
+
+.notice {
+  background: var(--primary-soft);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+}
+
+.success {
+  color: var(--success);
+  background: var(--success-soft);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+}
+
+.placeholder {
+  border-style: dashed;
+  max-width: 720px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Formulare ---------- */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.span-all {
+  grid-column: 1 / -1;
+}
+
+.form-grid h2 {
+  margin: 0.5rem 0 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.hint {
+  color: var(--muted);
+}
+
+.field-error {
+  color: var(--danger);
+}
+
+.has-error input,
+.has-error select,
+.has-error textarea {
+  border-color: var(--danger);
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  font-size: 1rem; /* mindestens 16px, sonst zoomt das iPhone beim Antippen */
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  min-height: 2.5rem;
+  width: 100%;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: var(--bg);
+  color: var(--muted);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox input {
+  width: auto;
+  min-height: auto;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+button,
+.button {
+  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button:hover,
+.button:hover {
+  background: var(--bg);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.primary:hover {
+  background: var(--primary-hover);
+}
+
+.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.danger:hover {
+  background: var(--danger-soft);
+}
+
+.link-button {
+  border: none;
+  background: none;
+  padding: 0;
+  min-height: auto;
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  background: none;
+}
+
+/* ---------- Filter, Tabellen, Seiten ---------- */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.filters .field {
+  flex: 1 1 180px;
+}
+
+.filters .grow {
+  flex: 3 1 280px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.card .table-wrap {
+  border: none;
+}
+
+.table-wrap.is-loading {
+  opacity: 0.6;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: var(--bg);
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tr.clickable {
+  cursor: pointer;
+}
+
+tr.clickable:hover {
+  background: var(--primary-soft);
+}
+
+tr.inactive td {
+  color: var(--muted);
+}
+
+td.num,
+th.num {
+  text-align: right;
+}
+
+td.actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+td.actions button + button {
+  margin-left: 0.5rem;
+}
+
+td.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 1.5rem;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.details dt {
+  color: var(--muted);
+}
+
+.details dd {
+  margin: 0;
+}
+
+.changes {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+/* ---------- Dialog und Anmeldung ---------- */
+
+.dialog {
+  border: none;
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  width: min(440px, calc(100vw - 2rem));
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.dialog::backdrop {
+  background: rgba(27, 36, 48, 0.45);
+}
+
+.login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.login-card {
+  width: min(400px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.login-card h1,
+.login-card p {
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.35rem;
+  }
+
+  .details {
+    grid-template-columns: 1fr;
+  }
+
+  .details dd {
+    margin-bottom: 0.5rem;
+  }
+}

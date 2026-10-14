@@ -1,0 +1,48 @@
+# Ganze Anwendung starten:          docker compose up --build    ->  http://localhost:3000
+# Nur die Datenbank (Entwicklung):  docker compose up -d db
+# Werte kommen aus der Datei .env (Vorlage: .env.example)
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-schulinventar}
+      POSTGRES_USER: ${POSTGRES_USER:-schulinventar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD in .env setzen}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      # Nur für die lokale Entwicklung vom eigenen Laptop aus. Im Echtbetrieb entfernen.
+      - '127.0.0.1:5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER:-schulinventar}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-schulinventar}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET in .env setzen}
+      SESSION_IDLE_MINUTES: ${SESSION_IDLE_MINUTES:-30}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    ports:
+      - '3000:3000'
+    volumes:
+      # Hochgeladene Belege (ab Sprint 4)
+      - uploads:/data/uploads
+
+volumes:
+  db-data:
+  uploads:
