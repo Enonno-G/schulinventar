@@ -1,0 +1,31 @@
+<%# Formular für einen neuen Raum (raum.id fehlt) oder zum Bearbeiten %>
+<% const istNeu = !raum.id; %>
+<%- include('../teile/kopf', { titel: istNeu ? 'Neuer Raum' : 'Raum bearbeiten' }) %>
+
+<p class="pfad"><a href="/raeume">Räume</a> / <%= istNeu ? 'Neuer Raum' : raum.nummer %></p>
+<h1><%= istNeu ? 'Neuer Raum' : 'Raum bearbeiten' %></h1>
+
+<form method="post" action="<%= istNeu ? '/raeume/neu' : '/raeume/' + raum.id + '/bearbeiten' %>" class="karte formular">
+  <label class="feld">
+    <span>Raumnummer *</span>
+    <input name="nummer" value="<%= raum.nummer %>" autofocus>
+    <% if (fehler.nummer) { %><small class="fehler"><%= fehler.nummer %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Bezeichnung</span>
+    <input name="bezeichnung" value="<%= raum.bezeichnung %>" placeholder="z. B. EDV-Saal">
+  </label>
+
+  <label class="feld">
+    <span>Stockwerk</span>
+    <input name="stockwerk" value="<%= raum.stockwerk %>" placeholder="z. B. 1. Stock">
+  </label>
+
+  <div class="knoepfe ganze-breite">
+    <a class="knopf" href="/raeume">Abbrechen</a>
+    <button class="knopf haupt">Speichern</button>
+  </div>
+</form>
+
+<%- include('../teile/fuss') %>

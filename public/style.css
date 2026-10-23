@@ -1,0 +1,491 @@
+/* Aussehen des Schulinventars: einfach, gut lesbar, am PC, Tablet und Handy bedienbar (Pflichtenheft Kap. 5).
+   Farben stehen oben als Variablen und können an einer Stelle geändert werden. */
+
+:root {
+  --hintergrund: #f3f5f8;
+  --flaeche: #ffffff;
+  --text: #1b2430;
+  --leise: #5a6574;
+  --rand: #d5dbe3;
+  --blau: #1f5fa8;
+  --blau-dunkel: #184d8a;
+  --blau-hell: #e8f0fa;
+  --rot: #b42318;
+  --rot-hell: #fdecea;
+  --gruen: #1e7b3c;
+  --gruen-hell: #e7f5ec;
+  --rundung: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--hintergrund);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    Arial,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+h1 {
+  font-size: 1.6rem;
+  line-height: 1.25;
+  margin: 0 0 0.75rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.75rem;
+}
+
+a {
+  color: var(--blau);
+}
+
+/* ---------- Kopfzeile und Menü ---------- */
+
+.kopfzeile {
+  background: var(--flaeche);
+  border-bottom: 1px solid var(--rand);
+}
+
+.kopfzeile-innen,
+.menue,
+.inhalt {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.kopfzeile-innen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.benutzermenue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  font-size: 0.9rem;
+}
+
+.benutzermenue small {
+  color: var(--leise);
+}
+
+.benutzermenue form {
+  margin: 0;
+}
+
+.menue {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto; /* auf dem Handy seitlich wischen */
+}
+
+.menue a {
+  padding: 0.6rem 0.8rem;
+  white-space: nowrap;
+  color: var(--leise);
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+}
+
+.menue a:hover {
+  color: var(--text);
+}
+
+.menue a.aktiv {
+  color: var(--blau);
+  border-bottom-color: var(--blau);
+  font-weight: 600;
+}
+
+.inhalt {
+  flex: 1;
+  padding-top: 1.25rem;
+  padding-bottom: 2rem;
+}
+
+.fusszeile {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--leise);
+}
+
+/* ---------- Bausteine ---------- */
+
+.seitenkopf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.seitenkopf h1 {
+  margin: 0;
+}
+
+.pfad {
+  margin: 0 0 0.25rem;
+  font-size: 0.9rem;
+  color: var(--leise);
+}
+
+.karte {
+  background: var(--flaeche);
+  border: 1px solid var(--rand);
+  border-radius: var(--rundung);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.zwei-spalten {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 0 1rem;
+}
+
+.leise {
+  color: var(--leise);
+}
+
+.mehrzeilig {
+  white-space: pre-wrap;
+}
+
+.meldung,
+.warnung,
+.hinweis {
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--rundung);
+}
+
+.meldung {
+  background: var(--gruen-hell);
+  color: var(--gruen);
+}
+
+.warnung {
+  background: var(--rot-hell);
+  color: var(--rot);
+}
+
+.hinweis {
+  background: var(--blau-hell);
+}
+
+.geplant {
+  max-width: 720px;
+  border-style: dashed;
+}
+
+/* ---------- Formulare ---------- */
+
+.formular {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.formular h2 {
+  margin: 0.5rem 0 0;
+}
+
+.ganze-breite {
+  grid-column: 1 / -1;
+}
+
+.schmal {
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.feld {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.feld > span {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.fehler {
+  color: var(--rot);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--rand);
+  border-radius: 6px;
+  background: var(--flaeche);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem; /* mindestens 16px, sonst vergrößert das iPhone beim Antippen */
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: var(--hintergrund);
+  color: var(--leise);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(31, 95, 168, 0.35);
+  outline-offset: 1px;
+}
+
+.haekchen {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.haekchen input {
+  width: auto;
+  min-height: auto;
+}
+
+.knoepfe {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.knopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--rand);
+  border-radius: 6px;
+  background: var(--flaeche);
+  color: var(--text);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.knopf:hover {
+  background: var(--hintergrund);
+}
+
+.knopf:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.knopf.haupt {
+  background: var(--blau);
+  border-color: var(--blau);
+  color: #fff;
+}
+
+.knopf.haupt:hover {
+  background: var(--blau-dunkel);
+}
+
+.knopf.gefahr {
+  border-color: var(--rot);
+  color: var(--rot);
+}
+
+/* Knopf, der wie ein Link aussieht (für „Abmelden“) */
+button.link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--blau);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- Filter und Tabellen ---------- */
+
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+}
+
+.filter .feld {
+  flex: 1 1 180px;
+}
+
+.filter .feld.breit {
+  flex: 3 1 280px;
+}
+
+.tabelle {
+  overflow-x: auto; /* breite Tabellen auf dem Handy seitlich wischen */
+  background: var(--flaeche);
+  border: 1px solid var(--rand);
+  border-radius: var(--rundung);
+}
+
+.karte .tabelle {
+  border: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--rand);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--hintergrund);
+  color: var(--leise);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: var(--blau-hell);
+}
+
+tr.inaktiv td {
+  color: var(--leise);
+}
+
+.zahl {
+  text-align: right;
+}
+
+.aktionen {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.aktionen form {
+  display: inline;
+  margin-left: 0.5rem;
+}
+
+.leer {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--leise);
+}
+
+.seiten {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--leise);
+}
+
+.angaben {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.angaben dt {
+  color: var(--leise);
+}
+
+.angaben dd {
+  margin: 0;
+}
+
+.aenderungen {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+/* ---------- Anmeldeseite ---------- */
+
+.anmelden {
+  max-width: 400px;
+  margin: 2rem auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.anmelden h1,
+.anmelden p {
+  margin: 0;
+}
+
+/* ---------- Handy ---------- */
+
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.35rem;
+  }
+
+  .angaben {
+    grid-template-columns: 1fr;
+  }
+
+  .angaben dd {
+    margin-bottom: 0.5rem;
+  }
+}

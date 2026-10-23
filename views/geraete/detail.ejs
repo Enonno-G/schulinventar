@@ -1,0 +1,114 @@
+<%- include('../teile/kopf', { titel: geraet.inventarnummer }) %>
+
+<p class="pfad"><a href="/geraete">Geräte</a> / <%= geraet.inventarnummer %></p>
+<div class="seitenkopf">
+  <h1><%= geraet.bezeichnung %></h1>
+  <% if (darf('geraete_bearbeiten')) { %>
+    <a class="knopf" href="/geraete/<%= geraet.id %>/bearbeiten">Bearbeiten</a>
+  <% } %>
+</div>
+
+<div class="zwei-spalten">
+  <section class="karte">
+    <h2>Stammdaten</h2>
+    <dl class="angaben">
+      <dt>Inventarnummer</dt> <dd><%= geraet.inventarnummer %></dd>
+      <dt>Gerätetyp</dt>      <dd><%= geraet.typ ?? '–' %></dd>
+      <dt>Seriennummer</dt>   <dd><%= geraet.seriennummer ?? '–' %></dd>
+      <dt>Raum</dt>
+      <dd><a href="/raeume/<%= geraet.raum_id %>"><%= raumName(geraet.raumnummer, geraet.raumbezeichnung) %></a></dd>
+      <dt>Herkunft</dt>
+      <dd>
+        <% if (geraet.herkunft === 'sap') { %>
+          aus SAP (Raum laut SAP: <%= geraet.sap_raumnummer ?? '–' %>)
+        <% } else { %>
+          von Hand angelegt
+        <% } %>
+      </dd>
+      <dt>Anschaffungsdatum</dt> <dd><%= datum(geraet.anschaffungsdatum) %></dd>
+      <dt>Letzte Inventur</dt>   <dd><%= datum(geraet.letzte_inventur) %></dd>
+    </dl>
+  </section>
+
+  <section class="karte">
+    <h2>Kauf und Garantie</h2>
+    <dl class="angaben">
+      <dt>Kaufdatum</dt>      <dd><%= datum(geraet.kaufdatum) %></dd>
+      <dt>Inbetriebnahme</dt> <dd><%= datum(geraet.inbetriebnahme) %></dd>
+      <dt>Garantie bis</dt>   <dd><%= datum(geraet.garantie_bis) %></dd>
+      <dt>Lieferant</dt>      <dd><%= geraet.lieferant ?? '–' %></dd>
+      <dt>Anmerkungen</dt>    <dd class="mehrzeilig"><%= geraet.anmerkungen ?? '–' %></dd>
+    </dl>
+  </section>
+</div>
+
+<section class="karte">
+  <h2>Belege</h2>
+  <% if (belege.length === 0) { %>
+    <p class="leise">Noch keine Belege. Rechnungen, Lieferscheine und Garantiedokumente hochladen kommt in Sprint 4.</p>
+  <% } else { %>
+    <ul>
+      <% for (const beleg of belege) { %>
+        <li><%= BEZEICHNUNGEN[beleg.art] %>: <%= beleg.dateiname %> (<%= datum(beleg.belegdatum) %>)</li>
+      <% } %>
+    </ul>
+  <% } %>
+</section>
+
+<section class="karte">
+  <h2>Raumwechsel</h2>
+  <% if (raumwechsel.length === 0) { %>
+    <p class="leise">Bisher kein Raumwechsel.</p>
+  <% } else { %>
+    <div class="tabelle">
+      <table>
+        <thead><tr><th>Zeitpunkt</th><th>Von</th><th>Nach</th><th>Anlass</th><th>Durch</th></tr></thead>
+        <tbody>
+          <% for (const wechsel of raumwechsel) { %>
+            <tr>
+              <td><%= datumZeit(wechsel.zeitpunkt) %></td>
+              <td><%= wechsel.von_raumnummer ?? '–' %></td>
+              <td><%= wechsel.nach_raumnummer %></td>
+              <td><%= BEZEICHNUNGEN[wechsel.anlass] %></td>
+              <td><%= wechsel.benutzer ?? '–' %></td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="karte">
+  <h2>Änderungsprotokoll</h2>
+  <% if (protokoll.length === 0) { %>
+    <p class="leise">Keine Einträge.</p>
+  <% } else { %>
+    <div class="tabelle">
+      <table>
+        <thead><tr><th>Zeitpunkt</th><th>Benutzer</th><th>Aktion</th><th>Was wurde geändert</th></tr></thead>
+        <tbody>
+          <% for (const eintrag of protokoll) { %>
+            <tr>
+              <td><%= datumZeit(eintrag.zeitpunkt) %></td>
+              <td><%= eintrag.benutzer ?? 'System' %></td>
+              <td><%= BEZEICHNUNGEN[eintrag.aktion] ?? eintrag.aktion %></td>
+              <td>
+                <ul class="aenderungen">
+                  <% for (const [feld, aenderung] of Object.entries(eintrag.aenderungen ?? {})) { %>
+                    <li>
+                      <strong><%= FELDNAMEN[feld] ?? feld %>:</strong>
+                      <%= wertAnzeigen(feld, aenderung.vorher) %> → <%= wertAnzeigen(feld, aenderung.nachher) %>
+                    </li>
+                  <% } %>
+                </ul>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('../teile/fuss') %>

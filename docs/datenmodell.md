@@ -1,143 +1,144 @@
 # Datenmodell
 
-Grundlage ist das Pflichtenheft, Kapitel 4 (Speicherung in der DB). Das Schema steht in
-[`server/src/db/migrations/001_grundschema.sql`](../server/src/db/migrations/001_grundschema.sql).
+Grundlage ist das Pflichtenheft, Kapitel 4 (Speicherung in der DB). Alle Tabellen stehen in
+[`datenbank/001_tabellen.sql`](../datenbank/001_tabellen.sql).
 
 ## Soll-Stand und Ist-Stand
 
-- **Soll-Stand** = was laut SAP vorhanden ist. Er steht in `devices` in den Spalten `sap_room_number`,
-  `sap_data` und `sap_imported_at` und wird nur vom SAP-Import geändert.
-- **Aktueller Raum** = `devices.room_id`. Er ändert sich, wenn jemand ein Gerät umstellt oder eine
-  Inventur übernommen wird. Jeder Wechsel landet mit Datum in `room_changes`.
-- **Ist-Stand** = was bei der Inventur tatsächlich gefunden wurde: `inventory_scans`. Eine Erfassung
-  kann auch eine Inventarnummer sein, die es im System nicht gibt (`device_id` ist dann leer).
+- **Soll-Stand** = was laut SAP vorhanden ist. Er steht in `geraete` in den Spalten `sap_raumnummer`, `sap_daten`
+  und `sap_importiert_am` und wird nur vom SAP-Import geändert.
+- **Aktueller Raum** = `geraete.raum_id`. Er ändert sich, wenn jemand ein Gerät umstellt oder eine Inventur
+  übernommen wird. Jeder Wechsel steht mit Zeitpunkt in `raumwechsel`.
+- **Ist-Stand** = was bei der Inventur gefunden wurde: `inventur_erfassungen`. Das kann auch eine Inventarnummer
+  sein, die es im System nicht gibt (`geraet_id` ist dann leer).
 
-Der Soll-Ist-Vergleich vergleicht `inventory_scans` mit dem Soll-Stand. Der SAP-Export gibt alle Geräte
-aus, deren aktueller Raum vom Raum laut SAP abweicht oder die nicht aus SAP stammen.
+Der Soll-Ist-Vergleich vergleicht `inventur_erfassungen` mit dem Soll-Stand. Der Export an SAP gibt alle Geräte aus,
+deren aktueller Raum vom Raum laut SAP abweicht oder die nicht aus SAP stammen.
 
-## ER-Diagramm
+## Diagramm
 
-GitHub und Visual Studio Code (mit Mermaid-Erweiterung) zeigen das Diagramm direkt an.
+GitHub und Visual Studio Code (mit einer Mermaid-Erweiterung) zeigen das Diagramm direkt an.
 
 ```mermaid
 erDiagram
-    rooms ||--o{ devices : "steht in"
-    suppliers |o--o{ devices : "liefert"
-    devices ||--o{ room_changes : "Raumwechsel"
-    devices ||--o{ device_documents : ""
-    documents ||--o{ device_documents : ""
-    inventories ||--o{ inventory_scans : "umfasst"
-    rooms |o--o{ inventory_scans : "erfasst in"
-    devices |o--o{ inventory_scans : "erkannt als"
-    users |o--o{ audit_log : "ändert"
-    users |o--o{ import_runs : "importiert"
+    raeume ||--o{ geraete : "steht in"
+    lieferanten |o--o{ geraete : "liefert"
+    geraete ||--o{ raumwechsel : "hat"
+    geraete ||--o{ geraet_belege : ""
+    belege ||--o{ geraet_belege : ""
+    inventuren ||--o{ inventur_erfassungen : "umfasst"
+    raeume |o--o{ inventur_erfassungen : "erfasst in"
+    geraete |o--o{ inventur_erfassungen : "erkannt als"
+    benutzer |o--o{ protokoll : "ändert"
+    benutzer |o--o{ importe : "importiert"
 
-    users {
+    benutzer {
         int id PK
         text name
         text email UK
-        user_role role "admin, accounting, facility, readonly"
-        text password_hash
-        boolean active
+        text rolle "admin, rechnungswesen, facility, lesen"
+        text passwort_hash
+        boolean aktiv
     }
-    rooms {
+    raeume {
         int id PK
-        text number UK "Raumnummer"
-        text name
-        text floor
+        text nummer UK
+        text bezeichnung
+        text stockwerk
     }
-    devices {
+    geraete {
         int id PK
-        text inventory_number UK "Strichcode"
-        text description
-        text device_type
-        text serial_number
-        int room_id FK "aktueller Raum"
-        date acquisition_date
-        date purchase_date
-        date commissioning_date
-        date warranty_until
-        int supplier_id FK
-        text notes
-        text source "sap oder manual"
-        text sap_room_number "Soll laut SAP"
-        jsonb sap_data
-        date last_inventory_date
+        text inventarnummer UK "Strichcode"
+        text bezeichnung
+        text typ
+        text seriennummer
+        int raum_id FK "aktueller Raum"
+        date anschaffungsdatum
+        date kaufdatum
+        date inbetriebnahme
+        date garantie_bis
+        int lieferant_id FK
+        text anmerkungen
+        text herkunft "sap oder manuell"
+        text sap_raumnummer "Soll laut SAP"
+        jsonb sap_daten
+        date letzte_inventur
     }
-    suppliers {
-        int id PK
-        text name UK
-    }
-    room_changes {
-        int id PK
-        int device_id FK
-        text from_room_number
-        text to_room_number
-        text reason "manual, import, inventory"
-        timestamptz changed_at
-    }
-    documents {
-        int id PK
-        text kind "Rechnung, Lieferschein, Garantie"
-        text original_name
-        text stored_name UK
-        text mime_type "PDF, JPG, PNG"
-        text sha256
-        date retain_until "Aufbewahrungsfrist"
-    }
-    device_documents {
-        int device_id PK, FK
-        int document_id PK, FK
-    }
-    inventories {
-        int id PK
-        text name
-        timestamptz started_at
-        timestamptz finished_at
-    }
-    inventory_scans {
-        int id PK
-        int inventory_id FK
-        int room_id FK
-        text inventory_number
-        int device_id FK "leer = nicht im System"
-        timestamptz scanned_at
-    }
-    import_runs {
-        int id PK
-        text file_name
-        text status "preview, committed, cancelled"
-        jsonb summary
-    }
-    import_mappings {
+    lieferanten {
         int id PK
         text name UK
-        jsonb mapping "SAP-Spalte zu Feld"
     }
-    audit_log {
+    raumwechsel {
+        int id PK
+        int geraet_id FK
+        text von_raumnummer
+        text nach_raumnummer
+        text anlass "manuell, import, inventur"
+        timestamptz zeitpunkt
+    }
+    belege {
+        int id PK
+        text art "rechnung, lieferschein, garantie"
+        text dateiname
+        text gespeichert_als UK
+        text dateityp "PDF, JPG, PNG"
+        text pruefsumme
+        date aufbewahren_bis
+    }
+    geraet_belege {
+        int geraet_id PK, FK
+        int beleg_id PK, FK
+    }
+    inventuren {
+        int id PK
+        text name
+        timestamptz begonnen_am
+        timestamptz abgeschlossen_am
+    }
+    inventur_erfassungen {
+        int id PK
+        int inventur_id FK
+        int raum_id FK
+        text inventarnummer
+        int geraet_id FK "leer = nicht im System"
+        timestamptz zeitpunkt
+    }
+    importe {
+        int id PK
+        text dateiname
+        text status "vorschau, uebernommen, abgebrochen"
+        jsonb ergebnis
+    }
+    import_zuordnungen {
+        int id PK
+        text name UK
+        jsonb zuordnung "SAP-Spalte zu Feld"
+    }
+    protokoll {
         bigint id PK
-        timestamptz at
-        int user_id FK
-        text entity
-        text entity_id
-        text action
-        jsonb changes
+        timestamptz zeitpunkt
+        int benutzer_id FK
+        text bereich
+        text eintrag_id
+        text aktion
+        jsonb aenderungen
     }
 ```
 
-## Regeln in der Datenbank
+## Regeln, die die Datenbank selbst durchsetzt
 
 | Regel                                                | Umsetzung                                                           |
 | ---------------------------------------------------- | ------------------------------------------------------------------- |
 | Inventarnummer und Raumnummer sind eindeutig         | `UNIQUE`                                                            |
-| Jedes Gerät hat genau einen Raum                     | `devices.room_id NOT NULL`                                          |
-| Raum mit Geräten kann nicht gelöscht werden          | Fremdschlüssel `ON DELETE RESTRICT` (zusätzlich Prüfung in der API) |
-| Ein Beleg gehört zu mehreren Geräten                 | Zwischentabelle `device_documents`                                  |
-| Belege in der Aufbewahrungsfrist sind nicht löschbar | Trigger `documents_protect_delete`                                  |
-| Änderungsprotokoll ist nicht veränderbar             | Trigger `audit_log_no_change`                                       |
-| Nur PDF, JPG und PNG                                 | `CHECK` auf `documents.mime_type` (zusätzlich Prüfung beim Upload)  |
+| Jedes Gerät hat genau einen Raum                     | `geraete.raum_id NOT NULL`                                          |
+| Raum mit Geräten kann nicht gelöscht werden          | `ON DELETE RESTRICT` (zusätzlich Prüfung in `src/seiten/raeume.js`) |
+| Ein Beleg gehört zu mehreren Geräten                 | Zwischentabelle `geraet_belege`                                     |
+| Belege in der Aufbewahrungsfrist sind nicht löschbar | Trigger `belege_nicht_loeschen`                                     |
+| Änderungsprotokoll ist nicht veränderbar             | Trigger `protokoll_nicht_aendern`                                   |
+| Nur PDF, JPG und PNG                                 | `CHECK` auf `belege.dateityp`                                       |
 
-## Schema ändern
+## Datenbank ändern
 
-Nie eine bestehende Migration ändern, sondern eine neue Datei anlegen, z. B.
-`002_lieferanten_kontakt.sql`. Sie wird beim nächsten Start automatisch ausgeführt.
+Nie eine bestehende Datei in `datenbank/` ändern, sondern eine neue anlegen, z. B. `002_geraet_farbe.sql` mit
+`ALTER TABLE geraete ADD COLUMN farbe text;`. Sie wird beim nächsten Start automatisch ausgeführt. Welche Dateien
+schon ausgeführt wurden, steht in der Tabelle `ausgefuehrte_sql_dateien`.

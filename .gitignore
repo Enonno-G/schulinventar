@@ -1,8 +1,9 @@
 node_modules/
-client/dist/
-data/
-coverage/
+
 *.log
 
-# Zugangsdaten und Konfiguration – nie ins Repository
+# Passwörter und Einstellungen – nie ins Repository
 .env
+
+# Arbeitsordner von Claude Code
+.claude/worktrees/

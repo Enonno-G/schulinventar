@@ -1,0 +1,28 @@
+<%- include('../teile/kopf', { titel: 'Benutzer' }) %>
+
+<div class="seitenkopf">
+  <h1>Benutzer</h1>
+  <a class="knopf haupt" href="/benutzer/neu">Benutzer anlegen</a>
+</div>
+
+<div class="tabelle">
+  <table>
+    <thead>
+      <tr><th>Name</th><th>E-Mail-Adresse</th><th>Rolle</th><th>Status</th><th>Letzte Anmeldung</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% for (const konto of alleBenutzer) { %>
+        <tr class="<%= konto.aktiv ? '' : 'inaktiv' %>">
+          <td><%= konto.name %></td>
+          <td><%= konto.email %></td>
+          <td><%= ROLLEN[konto.rolle] %></td>
+          <td><%= konto.aktiv ? 'aktiv' : 'deaktiviert' %></td>
+          <td><%= datumZeit(konto.letzte_anmeldung) %></td>
+          <td class="aktionen"><a class="knopf" href="/benutzer/<%= konto.id %>/bearbeiten">Bearbeiten</a></td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../teile/fuss') %>

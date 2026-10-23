@@ -1,0 +1,24 @@
+<%- include('teile/kopf', { titel: 'Anmelden' }) %>
+
+<form method="post" action="/anmelden" class="karte anmelden">
+  <h1>Anmelden</h1>
+  <p class="leise">Schulinventar der BHAK/BHAS Spittal an der Drau</p>
+
+  <% if (hinweis) { %><p class="hinweis"><%= hinweis %></p><% } %>
+  <% if (fehler) { %><p class="warnung"><%= fehler %></p><% } %>
+
+  <%# Wohin es nach der Anmeldung weitergeht %>
+  <input type="hidden" name="weiter" value="<%= weiter %>">
+
+  <label class="feld">
+    <span>E-Mail-Adresse</span>
+    <input type="email" name="email" value="<%= email %>" autocomplete="username" required autofocus>
+  </label>
+  <label class="feld">
+    <span>Passwort</span>
+    <input type="password" name="passwort" autocomplete="current-password" required>
+  </label>
+  <button class="knopf haupt">Anmelden</button>
+</form>
+
+<%- include('teile/fuss') %>

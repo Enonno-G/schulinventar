@@ -1,0 +1,32 @@
+<%- include('../teile/kopf', { titel: 'Raum ' + raum.nummer }) %>
+
+<p class="pfad"><a href="/raeume">Räume</a> / <%= raum.nummer %></p>
+<h1>Raum <%= raumName(raum.nummer, raum.bezeichnung) %></h1>
+<p class="leise">
+  <%= raum.stockwerk ?? 'Stockwerk nicht angegeben' %> ·
+  <%= geraete.length %> <%= geraete.length === 1 ? 'Gerät' : 'Geräte' %>
+</p>
+
+<div class="tabelle">
+  <table>
+    <thead>
+      <tr><th>Inventarnummer</th><th>Bezeichnung</th><th>Gerätetyp</th><th>Seriennummer</th><th>Garantie bis</th></tr>
+    </thead>
+    <tbody>
+      <% for (const geraet of geraete) { %>
+        <tr>
+          <td><a href="/geraete/<%= geraet.id %>"><%= geraet.inventarnummer %></a></td>
+          <td><%= geraet.bezeichnung %></td>
+          <td><%= geraet.typ ?? '–' %></td>
+          <td><%= geraet.seriennummer ?? '–' %></td>
+          <td><%= datum(geraet.garantie_bis) %></td>
+        </tr>
+      <% } %>
+      <% if (geraete.length === 0) { %>
+        <tr><td colspan="5" class="leer">Diesem Raum sind keine Geräte zugeordnet.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../teile/fuss') %>

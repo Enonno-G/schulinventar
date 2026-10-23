@@ -1,0 +1,10 @@
+<%- include('teile/kopf', { titel: titel }) %>
+
+<h1><%= titel %></h1>
+<div class="karte geplant">
+  <p><strong>In Arbeit – geplant für Sprint <%= sprint %>.</strong></p>
+  <p><%= text %></p>
+  <p class="leise">Pflichtenheft: <%= pflichtenheft %></p>
+</div>
+
+<%- include('teile/fuss') %>

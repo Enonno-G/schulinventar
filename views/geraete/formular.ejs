@@ -1,0 +1,99 @@
+<%#
+  Formular für ein neues Gerät (geraet.id fehlt) oder zum Bearbeiten.
+  Felder, die die eigene Rolle nicht ändern darf, sind gesperrt (disabled). Gesperrte Felder schickt der
+  Browser nicht mit – und der Server übernimmt ohnehin nur erlaubte Felder (siehe src/seiten/geraete.js).
+%>
+<% const istNeu = !geraet.id; %>
+<%- include('../teile/kopf', { titel: istNeu ? 'Gerät anlegen' : 'Gerät bearbeiten' }) %>
+<% const gesperrt = (feld) => (aenderbar.includes(feld) ? '' : 'disabled'); %>
+
+<p class="pfad"><a href="/geraete">Geräte</a> / <%= istNeu ? 'Neues Gerät' : geraet.inventarnummer %></p>
+<h1><%= istNeu ? 'Gerät anlegen' : 'Gerät bearbeiten' %></h1>
+<% if (!istNeu && benutzer.rolle === 'facility') { %>
+  <p class="hinweis">Als Facility-Management können Sie den Raum und die Anmerkungen ändern.</p>
+<% } %>
+
+<form method="post" action="<%= istNeu ? '/geraete/neu' : '/geraete/' + geraet.id + '/bearbeiten' %>" class="karte formular">
+  <h2 class="ganze-breite">Stammdaten</h2>
+
+  <label class="feld">
+    <span>Inventarnummer *</span>
+    <input name="inventarnummer" value="<%= geraet.inventarnummer %>" <%= gesperrt('inventarnummer') %>>
+    <% if (geraet.herkunft === 'sap') { %><small class="leise">Kommt aus SAP und kann nicht geändert werden</small><% } %>
+    <% if (fehler.inventarnummer) { %><small class="fehler"><%= fehler.inventarnummer %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Bezeichnung *</span>
+    <input name="bezeichnung" value="<%= geraet.bezeichnung %>" <%= gesperrt('bezeichnung') %>>
+    <% if (fehler.bezeichnung) { %><small class="fehler"><%= fehler.bezeichnung %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Gerätetyp</span>
+    <input name="typ" value="<%= geraet.typ %>" list="typen" <%= gesperrt('typ') %>>
+    <%# Vorschläge beim Tippen: alle Typen, die es schon gibt %>
+    <datalist id="typen">
+      <% for (const typ of typen) { %><option value="<%= typ %>"><% } %>
+    </datalist>
+    <% if (fehler.typ) { %><small class="fehler"><%= fehler.typ %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Seriennummer</span>
+    <input name="seriennummer" value="<%= geraet.seriennummer %>" <%= gesperrt('seriennummer') %>>
+    <% if (fehler.seriennummer) { %><small class="fehler"><%= fehler.seriennummer %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Raum *</span>
+    <select name="raum_id" <%= gesperrt('raum_id') %>>
+      <option value="">Bitte wählen …</option>
+      <% for (const raum of raeume) { %>
+        <option value="<%= raum.id %>" <%= geraet.raum_id === raum.id ? 'selected' : '' %>><%= raumName(raum.nummer, raum.bezeichnung) %></option>
+      <% } %>
+    </select>
+    <% if (fehler.raum_id) { %><small class="fehler"><%= fehler.raum_id %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Anschaffungsdatum</span>
+    <input type="date" name="anschaffungsdatum" value="<%= geraet.anschaffungsdatum %>" <%= gesperrt('anschaffungsdatum') %>>
+    <% if (fehler.anschaffungsdatum) { %><small class="fehler"><%= fehler.anschaffungsdatum %></small><% } %>
+  </label>
+
+  <h2 class="ganze-breite">Kauf und Garantie</h2>
+
+  <label class="feld">
+    <span>Kaufdatum</span>
+    <input type="date" name="kaufdatum" value="<%= geraet.kaufdatum %>" <%= gesperrt('kaufdatum') %>>
+    <% if (fehler.kaufdatum) { %><small class="fehler"><%= fehler.kaufdatum %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Inbetriebnahme</span>
+    <input type="date" name="inbetriebnahme" value="<%= geraet.inbetriebnahme %>" <%= gesperrt('inbetriebnahme') %>>
+    <% if (fehler.inbetriebnahme) { %><small class="fehler"><%= fehler.inbetriebnahme %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Garantie bis</span>
+    <input type="date" name="garantie_bis" value="<%= geraet.garantie_bis %>" <%= gesperrt('garantie_bis') %>>
+    <% if (fehler.garantie_bis) { %><small class="fehler"><%= fehler.garantie_bis %></small><% } %>
+  </label>
+
+  <label class="feld ganze-breite">
+    <span>Anmerkungen, z. B. Schäden oder Reparaturen</span>
+    <textarea name="anmerkungen" rows="4" <%= gesperrt('anmerkungen') %>><%= geraet.anmerkungen %></textarea>
+    <% if (fehler.anmerkungen) { %><small class="fehler"><%= fehler.anmerkungen %></small><% } %>
+  </label>
+
+  <p class="leise ganze-breite">Lieferant und Belege kommen in Sprint 4.</p>
+
+  <div class="knoepfe ganze-breite">
+    <a class="knopf" href="<%= istNeu ? '/geraete' : '/geraete/' + geraet.id %>">Abbrechen</a>
+    <button class="knopf haupt">Speichern</button>
+  </div>
+</form>
+
+<%- include('../teile/fuss') %>

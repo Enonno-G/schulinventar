@@ -1,0 +1,65 @@
+<%#
+  Formular für einen neuen Benutzer (konto.id fehlt) oder zum Bearbeiten.
+  „konto“ ist das Konto, das bearbeitet wird. „benutzer“ ist, wer gerade angemeldet ist.
+%>
+<% const istNeu = !konto.id; %>
+<% const eigenesKonto = konto.id === benutzer.id; %>
+<%- include('../teile/kopf', { titel: istNeu ? 'Neuer Benutzer' : 'Benutzer bearbeiten' }) %>
+
+<p class="pfad"><a href="/benutzer">Benutzer</a> / <%= istNeu ? 'Neuer Benutzer' : konto.name %></p>
+<h1><%= istNeu ? 'Neuer Benutzer' : konto.name + ' bearbeiten' %></h1>
+
+<form method="post" action="<%= istNeu ? '/benutzer/neu' : '/benutzer/' + konto.id + '/bearbeiten' %>" class="karte formular">
+  <label class="feld">
+    <span>Name *</span>
+    <input name="name" value="<%= konto.name %>" autofocus>
+    <% if (fehler.name) { %><small class="fehler"><%= fehler.name %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>E-Mail-Adresse *</span>
+    <input type="email" name="email" value="<%= konto.email %>">
+    <% if (fehler.email) { %><small class="fehler"><%= fehler.email %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Rolle *</span>
+    <% if (eigenesKonto) { %>
+      <%# Die eigene Rolle kann man nicht ändern, sonst könnte man sich aussperren %>
+      <input value="<%= ROLLEN[konto.rolle] %>" disabled>
+      <input type="hidden" name="rolle" value="<%= konto.rolle %>">
+    <% } else { %>
+      <select name="rolle">
+        <% for (const [rolle, name] of Object.entries(ROLLEN)) { %>
+          <option value="<%= rolle %>" <%= konto.rolle === rolle ? 'selected' : '' %>><%= name %></option>
+        <% } %>
+      </select>
+    <% } %>
+    <% if (fehler.rolle) { %><small class="fehler"><%= fehler.rolle %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span><%= istNeu ? 'Erstes Passwort *' : 'Neues Passwort' %></span>
+    <input type="password" name="passwort" autocomplete="new-password">
+    <small class="leise"><%= istNeu ? 'Mindestens 10 Zeichen' : 'Leer lassen, um das Passwort nicht zu ändern' %></small>
+    <% if (fehler.passwort) { %><small class="fehler"><%= fehler.passwort %></small><% } %>
+  </label>
+
+  <% if (!istNeu) { %>
+    <% if (eigenesKonto) { %>
+      <input type="hidden" name="aktiv" value="ja">
+    <% } else { %>
+      <label class="haekchen ganze-breite">
+        <input type="checkbox" name="aktiv" value="ja" <%= konto.aktiv ? 'checked' : '' %>>
+        Konto ist aktiv (deaktivierte Konten können sich nicht mehr anmelden)
+      </label>
+    <% } %>
+  <% } %>
+
+  <div class="knoepfe ganze-breite">
+    <a class="knopf" href="/benutzer">Abbrechen</a>
+    <button class="knopf haupt">Speichern</button>
+  </div>
+</form>
+
+<%- include('../teile/fuss') %>

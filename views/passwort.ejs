@@ -1,0 +1,27 @@
+<%- include('teile/kopf', { titel: 'Passwort ändern' }) %>
+
+<h1>Passwort ändern</h1>
+<% if (geaendert) { %><p class="meldung">Das Passwort wurde geändert.</p><% } %>
+
+<form method="post" action="/passwort" class="karte schmal">
+  <label class="feld">
+    <span>Aktuelles Passwort</span>
+    <input type="password" name="aktuell" autocomplete="current-password" autofocus>
+    <% if (fehler.aktuell) { %><small class="fehler"><%= fehler.aktuell %></small><% } %>
+  </label>
+  <label class="feld">
+    <span>Neues Passwort (mindestens 10 Zeichen)</span>
+    <input type="password" name="neu" autocomplete="new-password">
+    <% if (fehler.neu) { %><small class="fehler"><%= fehler.neu %></small><% } %>
+  </label>
+  <label class="feld">
+    <span>Neues Passwort wiederholen</span>
+    <input type="password" name="wiederholung" autocomplete="new-password">
+    <% if (fehler.wiederholung) { %><small class="fehler"><%= fehler.wiederholung %></small><% } %>
+  </label>
+  <div class="knoepfe">
+    <button class="knopf haupt">Passwort ändern</button>
+  </div>
+</form>
+
+<%- include('teile/fuss') %>

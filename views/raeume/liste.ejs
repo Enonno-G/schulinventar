@@ -1,0 +1,47 @@
+<%- include('../teile/kopf', { titel: 'Räume' }) %>
+
+<div class="seitenkopf">
+  <h1>Räume</h1>
+  <% if (darf('raeume_bearbeiten')) { %>
+    <a class="knopf haupt" href="/raeume/neu">Raum anlegen</a>
+  <% } %>
+</div>
+
+<div class="tabelle">
+  <table>
+    <thead>
+      <tr>
+        <th>Raumnummer</th>
+        <th>Bezeichnung</th>
+        <th>Stockwerk</th>
+        <th class="zahl">Geräte</th>
+        <% if (darf('raeume_bearbeiten')) { %><th></th><% } %>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (const raum of raeume) { %>
+        <tr>
+          <td><a href="/raeume/<%= raum.id %>"><%= raum.nummer %></a></td>
+          <td><%= raum.bezeichnung ?? '–' %></td>
+          <td><%= raum.stockwerk ?? '–' %></td>
+          <td class="zahl"><%= raum.anzahl_geraete %></td>
+          <% if (darf('raeume_bearbeiten')) { %>
+            <td class="aktionen">
+              <a class="knopf" href="/raeume/<%= raum.id %>/bearbeiten">Bearbeiten</a>
+              <%# Löschen fragt vorher nach (data-bestaetigen, siehe public/script.js) %>
+              <form method="post" action="/raeume/<%= raum.id %>/loeschen" data-bestaetigen="Raum <%= raum.nummer %> wirklich löschen?">
+                <button class="knopf gefahr" <%= raum.anzahl_geraete > 0 ? 'disabled' : '' %>
+                        title="<%= raum.anzahl_geraete > 0 ? 'Nur Räume ohne Geräte können gelöscht werden' : '' %>">Löschen</button>
+              </form>
+            </td>
+          <% } %>
+        </tr>
+      <% } %>
+      <% if (raeume.length === 0) { %>
+        <tr><td colspan="5" class="leer">Noch keine Räume angelegt.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../teile/fuss') %>

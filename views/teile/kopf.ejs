@@ -1,0 +1,55 @@
+<%#
+  Oberer Teil jeder Seite: Logo, angemeldeter Benutzer, Menü und Meldungen.
+  Einbinden mit: include('teile/kopf', { titel: 'Seitentitel' })
+%>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= titel %> – Schulinventar</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <% if (benutzer) { %>
+    <%# Automatische Abmeldung: Nach der eingestellten Zeit ohne Aktivität geht es zur Anmeldeseite %>
+    <meta http-equiv="refresh" content="<%= abmeldenNachMinuten * 60 + 5 %>;url=/anmelden?abgelaufen=1">
+  <% } %>
+</head>
+<body>
+<header class="kopfzeile">
+  <div class="kopfzeile-innen">
+    <a href="/" class="logo"><img src="/logo.svg" alt="" width="28" height="28"> Schulinventar</a>
+    <% if (benutzer) { %>
+      <div class="benutzermenue">
+        <span><%= benutzer.name %> <small>(<%= ROLLEN[benutzer.rolle] %>)</small></span>
+        <a href="/passwort">Passwort ändern</a>
+        <form method="post" action="/abmelden"><button class="link">Abmelden</button></form>
+      </div>
+    <% } %>
+  </div>
+
+  <% if (benutzer) { %>
+    <%
+      // Das Menü. Einträge mit „recht“ sieht nur, wer dieses Recht hat (siehe src/anmeldung.js).
+      const menue = [
+        { adresse: '/geraete', text: 'Geräte' },
+        { adresse: '/raeume', text: 'Räume' },
+        { adresse: '/inventur', text: 'Inventur', recht: 'inventur' },
+        { adresse: '/soll-ist', text: 'Soll-Ist-Vergleich' },
+        { adresse: '/import', text: 'SAP-Import', recht: 'sap_import_export' },
+        { adresse: '/export', text: 'Export' },
+        { adresse: '/benutzer', text: 'Benutzer', recht: 'benutzer_verwalten' },
+      ];
+    %>
+    <nav class="menue">
+      <% for (const punkt of menue) { %>
+        <% if (punkt.recht && !darf(punkt.recht)) continue; %>
+        <a href="<%= punkt.adresse %>" class="<%= aktuelleAdresse.startsWith(punkt.adresse) ? 'aktiv' : '' %>"><%= punkt.text %></a>
+      <% } %>
+    </nav>
+  <% } %>
+</header>
+
+<main class="inhalt">
+  <% if (meldung) { %><p class="meldung"><%= meldung %></p><% } %>
+  <% if (warnung) { %><p class="warnung"><%= warnung %></p><% } %>

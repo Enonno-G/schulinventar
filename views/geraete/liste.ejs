@@ -1,0 +1,83 @@
+<%- include('../teile/kopf', { titel: 'Geräte' }) %>
+
+<div class="seitenkopf">
+  <h1>Geräte</h1>
+  <% if (darf('geraete_anlegen')) { %>
+    <a class="knopf haupt" href="/geraete/neu">Gerät anlegen</a>
+  <% } %>
+</div>
+
+<%# Suche und Filter: ein normales Formular. method="get" schreibt die Werte in die Adresse,
+    z. B. /geraete?suche=beamer&raum=3 – so funktionieren auch „Zurück“ im Browser und Lesezeichen. %>
+<form method="get" action="/geraete" class="karte filter">
+  <label class="feld breit">
+    <span>Suche</span>
+    <input type="search" name="suche" value="<%= filter.suche %>" placeholder="Inventarnummer, Seriennummer oder Bezeichnung" autofocus>
+  </label>
+  <label class="feld">
+    <span>Raum</span>
+    <select name="raum">
+      <option value="">Alle Räume</option>
+      <% for (const raum of raeume) { %>
+        <option value="<%= raum.id %>" <%= filter.raum === raum.id ? 'selected' : '' %>><%= raumName(raum.nummer, raum.bezeichnung) %></option>
+      <% } %>
+    </select>
+  </label>
+  <label class="feld">
+    <span>Gerätetyp</span>
+    <select name="typ">
+      <option value="">Alle Typen</option>
+      <% for (const typ of typen) { %>
+        <option <%= filter.typ === typ ? 'selected' : '' %>><%= typ %></option>
+      <% } %>
+    </select>
+  </label>
+  <label class="feld">
+    <span>Garantie endet bis</span>
+    <input type="date" name="garantie_bis" value="<%= filter.garantieBis %>">
+  </label>
+  <div class="knoepfe">
+    <a class="knopf" href="/geraete">Zurücksetzen</a>
+    <button class="knopf haupt">Suchen</button>
+  </div>
+</form>
+
+<p class="leise"><%= anzahl %> <%= anzahl === 1 ? 'Gerät' : 'Geräte' %> gefunden</p>
+
+<div class="tabelle">
+  <table>
+    <thead>
+      <tr>
+        <th>Inventarnummer</th>
+        <th>Bezeichnung</th>
+        <th>Gerätetyp</th>
+        <th>Raum</th>
+        <th>Garantie bis</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (const geraet of geraete) { %>
+        <tr>
+          <td><a href="/geraete/<%= geraet.id %>"><%= geraet.inventarnummer %></a></td>
+          <td><%= geraet.bezeichnung %></td>
+          <td><%= geraet.typ ?? '–' %></td>
+          <td><%= raumName(geraet.raumnummer, geraet.raumbezeichnung) %></td>
+          <td><%= datum(geraet.garantie_bis) %></td>
+        </tr>
+      <% } %>
+      <% if (geraete.length === 0) { %>
+        <tr><td colspan="5" class="leer">Keine Geräte gefunden.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<% if (seitenAnzahl > 1) { %>
+  <nav class="seiten">
+    <% if (seite > 1) { %><a class="knopf" href="<%= seitenAdresse(seite - 1) %>">Zurück</a><% } %>
+    <span>Seite <%= seite %> von <%= seitenAnzahl %></span>
+    <% if (seite < seitenAnzahl) { %><a class="knopf" href="<%= seitenAdresse(seite + 1) %>">Weiter</a><% } %>
+  </nav>
+<% } %>
+
+<%- include('../teile/fuss') %>

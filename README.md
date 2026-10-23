@@ -3,64 +3,61 @@
 Schulinventar- und Belegverwaltung mit SAP-Datenaustausch. Diplomarbeit an der BHAK/BHAS Spittal an der Drau,
 Schuljahr 2026/27 (Projektleiter Erik Nemeth, Projektmitglied Enzo Gratz, Betreuung Gerald Zebedin).
 
-Die Inventardaten aus SAP werden mit Rechnungen, Lieferscheinen und Garantiedokumenten verknüpft. Die Inventur
-läuft Raum für Raum über die Inventarnummer auf dem Strichcode, danach zeigt ein Soll-Ist-Vergleich die
-Abweichungen. Änderungen gehen als Datei zurück an SAP.
+Die Inventardaten aus SAP werden mit Rechnungen, Lieferscheinen und Garantiedokumenten verknüpft. Die Inventur läuft
+Raum für Raum über die Inventarnummer auf dem Strichcode, danach zeigt ein Soll-Ist-Vergleich die Abweichungen.
+Änderungen gehen als Datei zurück an SAP.
+
+**Neu im Code?** Zuerst [docs/code-erklaert.md](docs/code-erklaert.md) lesen: wie man reinkommt, wie alles
+zusammenspielt und wie man etwas ändert.
 
 ## Stand
 
-| Bereich                                                    | Stand                     | Sprint  |
-| ---------------------------------------------------------- | ------------------------- | ------- |
-| Grundgerüst, Docker, Datenbankschema für alle Bereiche     | erste Version             | 1       |
-| Anmeldung, Rollen, automatische Abmeldung, Passwort ändern | erste Version             | 2       |
-| Benutzerverwaltung (Administrator)                         | erste Version             | 2       |
-| Raumverwaltung und Raumansicht                             | erste Version             | 2       |
-| Geräteliste mit Suche und Filtern, Detailansicht           | erste Version             | 2 bis 3 |
-| Gerät anlegen und bearbeiten, Raumwechsel mit Datum        | erste Version             | 3       |
-| Änderungsprotokoll                                         | erste Version             | 3       |
-| SAP-Import                                                 | Gerüst, Endpunkte geplant | 3       |
-| Belege hochladen und zuordnen                              | Gerüst, Tabellen fertig   | 4       |
-| Inventur und Soll-Ist-Vergleich                            | Gerüst, Tabellen fertig   | 4       |
-| Export CSV/Excel und SAP                                   | Gerüst                    | 4       |
-| Datensicherung, HTTPS im Echtbetrieb                       | offen                     | 4 bis 5 |
+| Bereich                                              | Stand                          | Sprint |
+| ---------------------------------------------------- | ------------------------------ | ------ |
+| Grundgerüst, Docker, Datenbank für alle Bereiche     | erste Version                  | 1      |
+| Anmeldung, Rollen, automatische Abmeldung, Passwort  | erste Version                  | 2      |
+| Benutzerverwaltung, Raumverwaltung                   | erste Version                  | 2      |
+| Geräteliste mit Suche und Filtern, Detailansicht     | erste Version                  | 2–3    |
+| Gerät anlegen und bearbeiten, Raumwechsel, Protokoll | erste Version                  | 3      |
+| SAP-Import                                           | Platzhalter-Seite, Tabellen da | 3      |
+| Belege, Inventur, Soll-Ist-Vergleich, Export         | Platzhalter-Seite, Tabellen da | 4      |
+| Datensicherung, HTTPS im Echtbetrieb                 | offen                          | 4–5    |
 
-Was die Gerüste genau tun sollen, steht jeweils oben in `server/src/modules/<bereich>/routes.js`.
-Diese Endpunkte antworten derzeit mit `501` und dem geplanten Sprint.
+Was in den noch offenen Bereichen gebaut werden soll, steht oben in [src/seiten/geplant.js](src/seiten/geplant.js).
 
 ## Technik
 
-- Backend: Node.js mit Express, PostgreSQL (Zugriff mit `pg`, SQL von Hand), Eingabeprüfung mit Zod
-- Oberfläche: React mit Vite, React Router
-- Betrieb: Docker Compose mit zwei Containern (`app` und `db`)
-- Tests: eingebauter Test-Runner von Node.js (`node --test`)
+- **Node.js** mit **Express**: der Server, der die Seiten ausliefert
+- **EJS**: Seiten-Vorlagen, normales HTML mit Platzhaltern (Ordner `views/`)
+- **PostgreSQL**: die Datenbank, SQL steht direkt im Code
+- **Docker Compose**: startet Datenbank und App mit einem Befehl
 
-## Voraussetzungen
+## Starten
 
-- [Node.js](https://nodejs.org) 22.9 oder neuer (empfohlen: aktuelle LTS-Version)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/). Unter Windows braucht Docker Desktop das
-  Windows-Subsystem für Linux. Falls es fehlt, in einer Eingabeaufforderung als Administrator `wsl --install`
-  ausführen und den Computer neu starten.
+Voraussetzung: [Docker Desktop](https://www.docker.com/products/docker-desktop/) läuft.
 
-## Schnellstart mit Docker
-
-1. `.env.example` nach `.env` kopieren.
-2. In `.env` mindestens `POSTGRES_PASSWORD` (auch in `DATABASE_URL`), `SESSION_SECRET` (mindestens 32 Zeichen)
-   und `ADMIN_PASSWORD` ändern.
-3. Starten:
+1. Einmalig: `.env.example` nach `.env` kopieren und die Passwörter ändern (`SESSION_SECRET` mindestens 32 Zeichen).
+2. Starten:
 
    ```bash
-   docker compose up --build
+   docker compose up -d --build
    ```
 
-4. <http://localhost:3000> öffnen und mit `ADMIN_EMAIL` und `ADMIN_PASSWORD` anmelden.
+3. <http://localhost:3000> öffnen und mit `ADMIN_EMAIL` und `ADMIN_PASSWORD` aus `.env` anmelden.
 
-## Entwicklung
+Beenden mit `docker compose down` (die Daten bleiben erhalten).
 
-Die Datenbank läuft im Docker-Container, Server und Oberfläche direkt auf dem Laptop. Änderungen am Code sind
-damit sofort sichtbar.
+## Entwickeln
+
+Beim Entwickeln läuft nur die Datenbank im Container, die App direkt auf dem Laptop. Dann wird bei jeder Änderung am
+Code automatisch neu gestartet. Voraussetzung: [Node.js](https://nodejs.org) 22.9 oder neuer.
 
 ```bash
 npm install
+```
+
+```bash
+docker compose stop app
 ```
 
 ```bash
@@ -68,63 +65,54 @@ docker compose up -d db
 ```
 
 ```bash
-npm run db:seed
-```
-
-```bash
 npm run dev
 ```
 
-Danach <http://localhost:5173> öffnen. `npm run db:seed` legt 30 Räume, 500 Geräte und je Rolle einen Testbenutzer
-an (Adressen und Passwort siehe `.env.example`). Für den Performance-Test mit 10.000 Geräten:
-`npm run db:seed -- 10000`.
+| Befehl                       | Zweck                                                        |
+| ---------------------------- | ------------------------------------------------------------ |
+| `npm run dev`                | App starten, startet bei Änderungen am Code automatisch neu  |
+| `npm run testdaten`          | 30 Räume, 500 Geräte und je Rolle einen Testbenutzer anlegen |
+| `npm run testdaten -- 10000` | 10.000 Geräte für den Performance-Test                       |
+| `npm test`                   | automatische Tests                                           |
+| `npm run format`             | Code einheitlich formatieren                                 |
 
-| Befehl               | Zweck                                                                    |
-| -------------------- | ------------------------------------------------------------------------ |
-| `npm run dev`        | Server (Port 3000) und Oberfläche (Port 5173) mit automatischem Neuladen |
-| `npm test`           | Tests ausführen                                                          |
-| `npm run lint`       | Code mit ESLint prüfen                                                   |
-| `npm run format`     | Code mit Prettier einheitlich formatieren                                |
-| `npm run build`      | Oberfläche für den Betrieb bauen (`client/dist`)                         |
-| `npm run db:migrate` | Datenbankschema aktualisieren (passiert auch beim Start automatisch)     |
-| `npm run db:seed`    | Testdaten anlegen                                                        |
+Testbenutzer: `admin@test.local`, `rechnungswesen@test.local`, `facility@test.local`, `lesen@test.local`, Passwort
+`SEED_PASSWORD` aus `.env`.
 
-### Tests mit Datenbank
+### Tests
 
-Die API-Tests in `server/test/api.test.js` laufen gegen eine eigene Testdatenbank und werden sonst übersprungen.
-Einmal anlegen:
+Die Tests in `test/app.test.js` brauchen eine eigene Testdatenbank. Einmal anlegen:
 
 ```bash
 docker compose exec db createdb -U schulinventar schulinventar_test
 ```
 
-Dann in `.env` die Zeile `TEST_DATABASE_URL` aktivieren und `npm test` ausführen.
+Dann in `.env` die Zeile `TEST_DATABASE_URL` aktivieren (das `#` am Anfang entfernen) und `npm test` ausführen.
 
-## Projektstruktur
+## Ordner
 
 ```text
-server/
-  src/
-    index.js            Start: Datenbank abwarten, Schema aktualisieren, Server starten
-    app.js              Express-App: Sicherheit, Sitzungen, Routen
-    config.js           Einstellungen aus .env
-    db/                 Verbindung, Migrationen, Testdaten
-    lib/                Hilfsfunktionen (Passwörter, Rollen, Protokoll, SQL, Prüfung)
-    middleware/         Anmeldung prüfen, Fehlermeldungen
-    modules/            ein Ordner je Bereich aus dem Pflichtenheft
-  test/
-client/
-  src/
-    pages/              eine Datei je Seite
-    components/         wiederverwendbare Bausteine
-    api.js, auth.jsx    Verbindung zum Server, Anmeldung
-docs/datenmodell.md     ER-Diagramm und Regeln in der Datenbank
+src/
+  start.js          Programm starten
+  app.js            welche Adresse wohin führt, Sicherheit, Sitzungen
+  seiten/           eine Datei je Bereich: Geräte, Räume, Benutzer, Anmelden, geplante Bereiche
+  anmeldung.js      Rollen und Rechte
+  datenbank.js      Verbindung zur Datenbank
+  protokoll.js      Änderungsprotokoll
+  pruefen.js        Eingaben prüfen
+  format.js         Datum und Texte auf Deutsch
+  passwort.js       Passwörter sicher speichern
+  testdaten.js      Testdaten anlegen
+views/              Seiten-Vorlagen (HTML mit Platzhaltern), ein Ordner je Bereich
+public/             Aussehen (style.css), Logo, ein kleines Script
+datenbank/          Aufbau der Datenbank als SQL
+test/               automatische Tests
+docs/               Erklärung des Codes und Datenmodell
 ```
 
-## Rollen und Berechtigungen
+## Rollen und Rechte
 
-Lesen dürfen alle angemeldeten Benutzer. Geprüft wird immer am Server (`server/src/lib/permissions.js`), die
-Oberfläche blendet Knöpfe nur zusätzlich aus.
+Ansehen dürfen alle angemeldeten Benutzer. Geprüft wird immer am Server ([src/anmeldung.js](src/anmeldung.js)).
 
 | Recht                          | Administrator | Sekretariat und Rechnungswesen |   Facility-Management    | Lesezugriff |
 | ------------------------------ | :-----------: | :----------------------------: | :----------------------: | :---------: |
@@ -133,21 +121,22 @@ Oberfläche blendet Knöpfe nur zusätzlich aus.
 | Gerät anlegen                  |       ✓       |               ✓                |                          |             |
 | Gerät bearbeiten               |       ✓       |               ✓                | nur Raum und Anmerkungen |             |
 | Belege hochladen               |       ✓       |               ✓                |                          |             |
-| SAP-Import, SAP-Export         |       ✓       |               ✓                |                          |             |
-| Inventur durchführen           |       ✓       |                                |            ✓             |             |
+| SAP-Import und -Export         |       ✓       |               ✓                |                          |             |
+| Inventur                       |       ✓       |                                |            ✓             |             |
 
 ## Sicherheit
 
 - Passwörter nur als Hash (scrypt), höchstens 10 Fehlversuche bei der Anmeldung in 15 Minuten
-- Sitzung in der Datenbank, Cookie nur für den Server lesbar (`HttpOnly`, `SameSite=Strict`)
-- Automatische Abmeldung nach `SESSION_IDLE_MINUTES` ohne Aktivität
-- Alle Datenbankabfragen mit Parametern (Schutz gegen SQL-Injection), Sicherheits-Header mit Helmet
-- Echtbetrieb nur über HTTPS: Reverse Proxy (z. B. Caddy oder nginx) vor den Container setzen und
-  `COOKIE_SECURE=true` sowie `TRUST_PROXY=true` eintragen
+- Rechte werden am Server geprüft, nicht nur in der Oberfläche
+- Alle Datenbankabfragen mit Platzhaltern `$1, $2, …` (Schutz gegen SQL-Injection)
+- Alle Werte in den Vorlagen mit `<%= %>` ausgegeben, das maskiert HTML (Schutz gegen eingeschleuste Skripte)
+- Automatische Abmeldung nach `SESSION_IDLE_MINUTES` ohne Aktivität, Sicherheits-Header mit Helmet
+- Echtbetrieb nur über HTTPS: einen Reverse Proxy (z. B. Caddy) vor den Container setzen und in `.env`
+  `COOKIE_SECURE=true` und `TRUST_PROXY=true` eintragen
 
 ## Zusammenarbeit
 
-- Neue Arbeit immer in einem eigenen Branch, z. B. `feature/sap-import`
-- Zusammenführen nur über einen Pull Request, den das andere Teammitglied ansieht (Vier-Augen-Prinzip)
-- Vor dem Pull Request: `npm run lint` und `npm test`
-- Änderungen am Datenbankschema nur als neue Migration (siehe `docs/datenmodell.md`)
+- Neue Arbeit in einem eigenen Branch, z. B. `feature/sap-import`
+- Zusammenführen über einen Pull Request, den das andere Teammitglied ansieht (Vier-Augen-Prinzip)
+- Vorher `npm test` ausführen
+- Änderungen an der Datenbank nur als neue Datei in `datenbank/` (siehe [docs/datenmodell.md](docs/datenmodell.md))
