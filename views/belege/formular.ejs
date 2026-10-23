@@ -1,0 +1,58 @@
+<%#
+  Formular „Beleg hochladen“. enctype="multipart/form-data" ist nötig, damit der Browser die Datei mitschickt.
+  Die Datei steht absichtlich als letztes Feld: Ist sie zu groß, sind die anderen Eingaben trotzdem schon angekommen.
+%>
+<%- include('../teile/kopf', { titel: 'Beleg hochladen' }) %>
+<% const zurueck = beleg.geraet ? '/geraete/' + beleg.geraet : '/belege'; %>
+
+<p class="pfad"><a href="/belege">Belege</a> / Beleg hochladen</p>
+<h1>Beleg hochladen</h1>
+
+<form method="post" action="/belege/neu" enctype="multipart/form-data" class="karte formular">
+  <% if (beleg.geraet) { %><input type="hidden" name="geraet" value="<%= beleg.geraet %>"><% } %>
+
+  <label class="feld">
+    <span>Art *</span>
+    <select name="art">
+      <% for (const art of BELEGARTEN) { %>
+        <option value="<%= art %>" <%= beleg.art === art ? 'selected' : '' %>><%= BEZEICHNUNGEN[art] %></option>
+      <% } %>
+    </select>
+    <% if (fehler.art) { %><small class="fehler"><%= fehler.art %></small><% } %>
+  </label>
+
+  <label class="feld">
+    <span>Belegdatum</span>
+    <input type="date" name="belegdatum" value="<%= beleg.belegdatum %>">
+    <small class="leise">Datum auf der Rechnung bzw. dem Lieferschein</small>
+    <% if (fehler.belegdatum) { %><small class="fehler"><%= fehler.belegdatum %></small><% } %>
+  </label>
+
+  <label class="feld ganze-breite">
+    <span>Inventarnummern der Geräte *</span>
+    <textarea name="inventarnummern" rows="5" placeholder="eine Nummer pro Zeile, z. B. 20000001"><%= beleg.inventarnummern %></textarea>
+    <small class="leise">
+      Gilt eine Rechnung für mehrere Geräte (z. B. 20 PCs), alle Inventarnummern eintragen: eine pro Zeile oder mit
+      Komma getrennt. Mit einem Strichcode-Scanner einfach ein Etikett nach dem anderen scannen.
+    </small>
+    <% if (fehler.inventarnummern) { %><small class="fehler"><%= fehler.inventarnummern %></small><% } %>
+  </label>
+
+  <label class="feld ganze-breite">
+    <span>Datei *</span>
+    <%# accept schlägt im Dateidialog nur passende Dateien vor. Geprüft wird trotzdem am Server (src/dateien.js). %>
+    <input type="file" name="datei" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+    <small class="leise">PDF, JPG oder PNG. Am Handy kann man auch direkt ein Foto machen.</small>
+    <% if (fehler.datei) { %><small class="fehler"><%= fehler.datei %></small><% } %>
+    <% if (Object.keys(fehler).length > 0 && !fehler.datei) { %>
+      <small class="fehler">Bitte die Datei noch einmal auswählen.</small>
+    <% } %>
+  </label>
+
+  <div class="knoepfe ganze-breite">
+    <a class="knopf" href="<%= zurueck %>">Abbrechen</a>
+    <button class="knopf haupt">Hochladen</button>
+  </div>
+</form>
+
+<%- include('../teile/fuss') %>

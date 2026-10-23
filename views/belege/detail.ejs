@@ -1,0 +1,83 @@
+<%- include('../teile/kopf', { titel: BEZEICHNUNGEN[beleg.art] + ' ' + beleg.dateiname }) %>
+
+<p class="pfad"><a href="/belege">Belege</a> / <%= beleg.dateiname %></p>
+<div class="seitenkopf">
+  <h1><%= BEZEICHNUNGEN[beleg.art] %>: <%= beleg.dateiname %></h1>
+  <a class="knopf haupt" href="/belege/<%= beleg.id %>/datei" target="_blank">Datei öffnen</a>
+</div>
+
+<div class="zwei-spalten">
+  <section class="karte">
+    <h2>Angaben</h2>
+    <dl class="angaben">
+      <dt>Art</dt>             <dd><%= BEZEICHNUNGEN[beleg.art] %></dd>
+      <dt>Belegdatum</dt>      <dd><%= datum(beleg.belegdatum) %></dd>
+      <dt>Dateigröße</dt>      <dd><%= dateigroesse(beleg.groesse_bytes) %></dd>
+      <dt>Hochgeladen</dt>     <dd><%= datumZeit(beleg.hochgeladen_am) %> von <%= beleg.hochgeladen_von_name ?? '–' %></dd>
+    </dl>
+  </section>
+
+  <section class="karte">
+    <h2>Aufbewahrung</h2>
+    <dl class="angaben">
+      <dt>Aufbewahren bis</dt> <dd><%= datum(beleg.aufbewahren_bis) %></dd>
+      <dt>Prüfsumme</dt>       <dd class="pruefsumme"><%= beleg.pruefsumme %></dd>
+    </dl>
+    <p class="leise">
+      Die Datei wird unverändert gespeichert und kann bis zum Ende der Aufbewahrungsfrist nicht gelöscht werden.
+      Die Prüfsumme belegt, dass sie seit dem Hochladen nicht verändert wurde.
+    </p>
+  </section>
+</div>
+
+<section class="karte">
+  <h2>Zugeordnete Geräte (<%= geraete.length %>)</h2>
+  <div class="tabelle">
+    <table>
+      <thead>
+        <tr>
+          <th>Inventarnummer</th>
+          <th>Bezeichnung</th>
+          <th>Raum</th>
+          <% if (darf('belege_hochladen')) { %><th></th><% } %>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const geraet of geraete) { %>
+          <tr>
+            <td><a href="/geraete/<%= geraet.id %>"><%= geraet.inventarnummer %></a></td>
+            <td><%= geraet.bezeichnung %></td>
+            <td><%= raumName(geraet.raumnummer, geraet.raumbezeichnung) %></td>
+            <% if (darf('belege_hochladen')) { %>
+              <td class="aktionen">
+                <form method="post" action="/belege/<%= beleg.id %>/entfernen"
+                      data-bestaetigen="Zuordnung zu Gerät <%= geraet.inventarnummer %> entfernen? Der Beleg selbst bleibt gespeichert.">
+                  <input type="hidden" name="geraet_id" value="<%= geraet.id %>">
+                  <button class="knopf gefahr">Zuordnung entfernen</button>
+                </form>
+              </td>
+            <% } %>
+          </tr>
+        <% } %>
+        <% if (geraete.length === 0) { %>
+          <tr><td colspan="4" class="leer">Dieser Beleg ist keinem Gerät zugeordnet.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if (darf('belege_hochladen')) { %>
+    <form method="post" action="/belege/<%= beleg.id %>/zuordnen" class="formular zuordnen">
+      <label class="feld ganze-breite">
+        <span>Weiteren Geräten zuordnen</span>
+        <textarea name="inventarnummern" rows="3" placeholder="eine Inventarnummer pro Zeile"><%= formular.inventarnummern %></textarea>
+        <% if (formular.fehler) { %><small class="fehler"><%= formular.fehler %></small><% } %>
+      </label>
+      <div class="knoepfe ganze-breite">
+        <button class="knopf">Zuordnen</button>
+      </div>
+    </form>
+  <% } %>
+</section>
+
+<%- include('../teile/fuss') %>

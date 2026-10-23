@@ -43,15 +43,31 @@
 </div>
 
 <section class="karte">
-  <h2>Belege</h2>
+  <div class="seitenkopf">
+    <h2>Belege</h2>
+    <% if (darf('belege_hochladen')) { %>
+      <a class="knopf" href="/belege/neu?geraet=<%= geraet.id %>">Beleg hochladen</a>
+    <% } %>
+  </div>
   <% if (belege.length === 0) { %>
-    <p class="leise">Noch keine Belege. Rechnungen, Lieferscheine und Garantiedokumente hochladen kommt in Sprint 4.</p>
+    <p class="leise">Noch keine Rechnung, kein Lieferschein und kein Garantiedokument.</p>
   <% } else { %>
-    <ul>
-      <% for (const beleg of belege) { %>
-        <li><%= BEZEICHNUNGEN[beleg.art] %>: <%= beleg.dateiname %> (<%= datum(beleg.belegdatum) %>)</li>
-      <% } %>
-    </ul>
+    <div class="tabelle">
+      <table>
+        <thead><tr><th>Art</th><th>Datei</th><th>Belegdatum</th><th>Größe</th><th></th></tr></thead>
+        <tbody>
+          <% for (const beleg of belege) { %>
+            <tr>
+              <td><%= BEZEICHNUNGEN[beleg.art] %></td>
+              <td><a href="/belege/<%= beleg.id %>/datei" target="_blank"><%= beleg.dateiname %></a></td>
+              <td><%= datum(beleg.belegdatum) %></td>
+              <td><%= dateigroesse(beleg.groesse_bytes) %></td>
+              <td class="aktionen"><a href="/belege/<%= beleg.id %>">Details</a></td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
   <% } %>
 </section>
 

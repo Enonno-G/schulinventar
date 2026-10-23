@@ -2,12 +2,14 @@
 // Räume mit Raumnummer, Bezeichnung und Stockwerk. Löschen nur, wenn kein Gerät mehr drin ist.
 //
 //   GET  /raeume                  Liste aller Räume
+//   GET  /raeume.csv              dieselbe Liste als CSV-Datei für Excel
 //   GET  /raeume/neu              Formular „Neuer Raum“        POST /raeume/neu              speichern
 //   GET  /raeume/:id              ein Raum mit allen Geräten
 //   GET  /raeume/:id/bearbeiten   Formular „Raum bearbeiten“   POST /raeume/:id/bearbeiten   speichern
 //   POST /raeume/:id/loeschen     Raum löschen
 import { Router } from 'express';
 import { nurMitRecht } from '../anmeldung.js';
+import { csvSenden } from '../csv.js';
 import { db } from '../datenbank.js';
 import { nichtGefunden } from '../fehler.js';
 import { protokollieren } from '../protokoll.js';
@@ -36,13 +38,28 @@ async function raumAusFormular(formular, raumId = 0) {
   return { raum, fehler };
 }
 
-router.get('/raeume', async (req, res) => {
-  const raeume = await db.alle(`
+// Alle Räume mit der Anzahl ihrer Geräte
+function raeumeLaden() {
+  return db.alle(`
     SELECT r.id, r.nummer, r.bezeichnung, r.stockwerk, count(g.id) AS anzahl_geraete
     FROM raeume r LEFT JOIN geraete g ON g.raum_id = r.id
     GROUP BY r.id
     ORDER BY r.nummer`);
-  res.render('raeume/liste', { raeume });
+}
+
+router.get('/raeume', async (req, res) => {
+  res.render('raeume/liste', { raeume: await raeumeLaden() });
+});
+
+router.get('/raeume.csv', async (req, res) => {
+  const spalten = [
+    { titel: 'Raumnummer', feld: 'nummer' },
+    { titel: 'Bezeichnung', feld: 'bezeichnung' },
+    { titel: 'Stockwerk', feld: 'stockwerk' },
+    { titel: 'Anzahl Geräte', feld: 'anzahl_geraete' },
+  ];
+  const heute = new Date().toISOString().slice(0, 10);
+  csvSenden(res, `raeume-${heute}.csv`, spalten, await raeumeLaden());
 });
 
 router.get('/raeume/neu', nurMitRecht('raeume_bearbeiten'), (req, res) => {

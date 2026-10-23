@@ -102,25 +102,43 @@ Die Vorlage [`views/raeume/detail.ejs`](../views/raeume/detail.ejs) ist normales
 
 Fast jede Funktion der App läuft nach diesem Muster ab. Wer das einmal verstanden hat, findet sich überall zurecht.
 
+### Sonderfall: Formular mit Datei („Beleg hochladen“)
+
+Ein Formular mit Datei braucht im HTML `enctype="multipart/form-data"`, sonst schickt der Browser nur den Dateinamen.
+Solche Formulare packt das Paket **multer** aus. In [`src/seiten/belege.js`](../src/seiten/belege.js) steht dafür
+`dateiEmpfangen('datei')` vor der Funktion. Danach liegt die Datei in `req.file`, die anderen Felder wie gewohnt in
+`req.body`. Was dann passiert, steht in [`src/dateien.js`](../src/dateien.js):
+
+1. **Prüfen:** Endet der Name auf `.pdf`, `.jpg`, `.jpeg` oder `.png`? Und beginnt der Inhalt wirklich so, wie eine
+   solche Datei beginnt (eine PDF immer mit `%PDF`)? So fällt auch eine umbenannte `.exe`-Datei auf.
+2. **Speichern:** unverändert im Ordner `uploads/`, unter einem zufälligen Namen. Dazu eine **Prüfsumme**, eine Art
+   Fingerabdruck der Datei: Ändert sich auch nur ein Zeichen, ändert sich die Prüfsumme.
+3. **Eintragen:** In der Tabelle `belege` stehen Art, Originalname und Prüfsumme, in `geraet_belege` die Geräte, zu
+   denen der Beleg gehört. So kann eine Rechnung zu 20 PCs gehören.
+
 ## 5. Wo liegt was?
 
-| Datei / Ordner               | Was drin ist                                                                          |
-| ---------------------------- | ------------------------------------------------------------------------------------- |
-| `src/seiten/geraete.js`      | alles zu Geräten: Liste, Suche, Anzeigen, Anlegen, Bearbeiten                         |
-| `src/seiten/raeume.js`       | alles zu Räumen                                                                       |
-| `src/seiten/benutzer.js`     | Benutzerverwaltung (nur Administrator)                                                |
-| `src/seiten/anmelden.js`     | Anmelden, Abmelden, Passwort ändern                                                   |
-| `src/seiten/geplant.js`      | Platzhalter für Import, Inventur, Soll-Ist, Export – mit Beschreibung, was dort kommt |
-| `views/…`                    | die zugehörigen Vorlagen, z. B. `views/geraete/liste.ejs`                             |
-| `views/teile/kopf.ejs`       | Kopf jeder Seite mit dem **Menü**                                                     |
-| `public/style.css`           | Aussehen: Farben, Abstände, Handy-Ansicht                                             |
-| `src/anmeldung.js`           | Rollen und **wer was darf**                                                           |
-| `src/app.js`                 | welche Adresse wohin führt, Sicherheit, Sitzungen                                     |
-| `src/datenbank.js`           | Verbindung zur Datenbank (`db.eine`, `db.alle`, `db.transaktion`)                     |
-| `datenbank/001_tabellen.sql` | Aufbau aller Tabellen                                                                 |
-| `src/testdaten.js`           | Testdaten                                                                             |
-| `test/`                      | automatische Tests                                                                    |
-| `.env`                       | Passwörter und Einstellungen (nur auf deinem Rechner, nicht auf GitHub)               |
+| Datei / Ordner               | Was drin ist                                                                  |
+| ---------------------------- | ----------------------------------------------------------------------------- |
+| `src/seiten/geraete.js`      | alles zu Geräten: Liste, Suche, Anzeigen, Anlegen, Bearbeiten, CSV-Export     |
+| `src/seiten/raeume.js`       | alles zu Räumen                                                               |
+| `src/seiten/belege.js`       | Rechnungen, Lieferscheine, Garantiedokumente hochladen und Geräten zuordnen   |
+| `src/seiten/export.js`       | Seite „Export“ mit den Links zu den CSV-Dateien                               |
+| `src/seiten/benutzer.js`     | Benutzerverwaltung (nur Administrator)                                        |
+| `src/seiten/anmelden.js`     | Anmelden, Abmelden, Passwort ändern                                           |
+| `src/seiten/geplant.js`      | Platzhalter für Import, Inventur, Soll-Ist – mit Beschreibung, was dort kommt |
+| `src/dateien.js`             | hochgeladene Dateien prüfen (nur PDF, JPG, PNG) und speichern                 |
+| `src/csv.js`                 | Listen in eine CSV-Datei für Excel umwandeln                                  |
+| `views/…`                    | die zugehörigen Vorlagen, z. B. `views/geraete/liste.ejs`                     |
+| `views/teile/kopf.ejs`       | Kopf jeder Seite mit dem **Menü**                                             |
+| `public/style.css`           | Aussehen: Farben, Abstände, Handy-Ansicht                                     |
+| `src/anmeldung.js`           | Rollen und **wer was darf**                                                   |
+| `src/app.js`                 | welche Adresse wohin führt, Sicherheit, Sitzungen                             |
+| `src/datenbank.js`           | Verbindung zur Datenbank (`db.eine`, `db.alle`, `db.transaktion`)             |
+| `datenbank/001_tabellen.sql` | Aufbau aller Tabellen                                                         |
+| `src/testdaten.js`           | Testdaten                                                                     |
+| `test/`                      | automatische Tests                                                            |
+| `.env`                       | Passwörter und Einstellungen (nur auf deinem Rechner, nicht auf GitHub)       |
 
 ## 6. JavaScript in fünf Minuten
 
@@ -226,4 +244,5 @@ Gut beschreiben lassen sich:
 - das Datenmodell mit Soll- und Ist-Stand ([`datenmodell.md`](datenmodell.md)),
 - die Sicherheit: Passwort-Hash, Rechte am Server, Platzhalter gegen SQL-Injection, `<%= %>` gegen eingeschleuste
   Skripte, automatische Abmeldung (README, Abschnitt _Sicherheit_),
-- die automatischen Tests, die u. a. die Abnahme-Testfälle T4 und T7 prüfen ([`test/app.test.js`](../test/app.test.js)).
+- die automatischen Tests, die u. a. die Abnahme-Testfälle T3, T4, T7 und T8 prüfen
+  ([`test/app.test.js`](../test/app.test.js)).

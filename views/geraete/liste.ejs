@@ -42,7 +42,11 @@
   </div>
 </form>
 
-<p class="leise"><%= anzahl %> <%= anzahl === 1 ? 'Gerät' : 'Geräte' %> gefunden</p>
+<div class="ergebniszeile">
+  <p class="leise"><%= anzahl %> <%= anzahl === 1 ? 'Gerät' : 'Geräte' %> gefunden</p>
+  <%# Lädt genau diese Liste (mit denselben Filtern, alle Seiten) als Datei für Excel herunter %>
+  <% if (anzahl > 0) { %><a class="knopf" href="<%= csvAdresse %>">Als CSV herunterladen</a><% } %>
+</div>
 
 <div class="tabelle">
   <table>

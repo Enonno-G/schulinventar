@@ -13,6 +13,12 @@ export function datumZeit(wert) {
   return new Date(wert).toLocaleString('de-AT', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Vienna' });
 }
 
+// 1536000 -> '1,5 MB'
+export function dateigroesse(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toLocaleString('de-AT', { maximumFractionDigits: 1 })} MB`;
+}
+
 // 'E.01' und 'Klassenraum' -> 'E.01 – Klassenraum'
 export function raumName(nummer, bezeichnung) {
   if (!bezeichnung) return nummer;
@@ -31,6 +37,8 @@ export const FELDNAMEN = {
   inbetriebnahme: 'Inbetriebnahme',
   garantie_bis: 'Garantie bis',
   anmerkungen: 'Anmerkungen',
+  lieferant: 'Lieferant',
+  beleg: 'Beleg',
   herkunft: 'Herkunft',
   nummer: 'Raumnummer',
   stockwerk: 'Stockwerk',
@@ -47,6 +55,8 @@ export const BEZEICHNUNGEN = {
   geloescht: 'Gelöscht',
   passwort_geaendert: 'Passwort geändert',
   passwort_zurueckgesetzt: 'Passwort zurückgesetzt',
+  beleg_zugeordnet: 'Beleg zugeordnet',
+  beleg_entfernt: 'Beleg-Zuordnung entfernt',
   manuell: 'Manuell',
   import: 'SAP-Import',
   inventur: 'Inventur',

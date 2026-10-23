@@ -5,5 +5,8 @@ node_modules/
 # Passwörter und Einstellungen – nie ins Repository
 .env
 
+# Hochgeladene Belege beim Entwickeln – echte Rechnungen gehören nicht auf GitHub
+uploads/
+
 # Arbeitsordner von Claude Code
 .claude/worktrees/

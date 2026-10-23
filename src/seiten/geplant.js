@@ -1,4 +1,5 @@
-// Seiten, die laut Jira-Plan erst später gebaut werden. Sie zeigen vorerst nur, was dort kommen wird.
+// Seiten, die laut Zeitplan im Pflichtenheft (Kap. 6.1) erst später gebaut werden.
+// Sie zeigen vorerst nur, was dort kommen wird.
 //
 // Was jeweils gebaut werden soll:
 //
@@ -8,17 +9,15 @@
 //   nach Bestätigung übernehmen: Abgleich über die Inventarnummer, Soll-Stand in geraete.sap_*,
 //   bereits ergänzte Daten bleiben erhalten, Raumwechsel mit Anlass 'import'.
 //
-// Belege (Sprint 4) – Pflichtenheft Kap. 4 „Formular für zusätzliche Eingaben“, Testfälle T3 und T8
-//   PDF/JPG/PNG hochladen (Dateityp am Inhalt prüfen), unverändert speichern, Prüfsumme in belege.pruefsumme,
-//   einem oder mehreren Geräten zuordnen (Tabelle geraet_belege), in der Detailansicht anzeigen.
-//
 // Inventur (Sprint 4) – Pflichtenheft Kap. 4 „Inventur mit Strichcode“ und „Soll-Ist-Vergleich“, Testfall T5
 //   Inventur starten (inventuren), Raum wählen, Inventarnummern eingeben oder mit Handscanner einlesen
 //   (inventur_erfassungen), danach Liste: fehlt / anderer Raum / nicht in SAP. Abweichungen übernehmen.
 //
-// Export (Sprint 4) – Pflichtenheft Kap. 4 „Export in CSV/Excel“ und „Export für SAP“, Testfall T6
-//   Jede Liste als CSV/Excel herunterladen. Für SAP: geänderte Geräte mit Inventarnummer, Raumnummer und
-//   Inventurdatum im Format, das SAP erwartet.
+// Export für SAP (Sprint 4) – Pflichtenheft Kap. 4 „Export im korrekten Format für SAP“, Testfall T6
+//   Geänderte Geräte mit Inventarnummer, Raumnummer und Inventurdatum im Format, das SAP erwartet.
+//   Kommt als zusätzlicher Abschnitt auf die Seite /export (src/seiten/export.js).
+//
+// Schon fertig (Sprint 2): Belege in src/seiten/belege.js, CSV-Export in src/seiten/geraete.js und raeume.js.
 import { Router } from 'express';
 import { nurMitRecht } from '../anmeldung.js';
 
@@ -48,15 +47,6 @@ router.get('/soll-ist', (req, res) => {
     sprint: 4,
     text: 'Zeigt nach der Inventur, welche Geräte fehlen, welche in einem anderen Raum gefunden wurden und welche nicht in SAP stehen.',
     pflichtenheft: 'Kap. 4 Soll-Ist-Vergleich',
-  });
-});
-
-router.get('/export', (req, res) => {
-  res.render('geplant', {
-    titel: 'Export',
-    sprint: 4,
-    text: 'Listen als CSV- oder Excel-Datei herunterladen und Änderungen im Format für den SAP-Import ausgeben.',
-    pflichtenheft: 'Kap. 4 Export in CSV-/Excel-Datei, Export im korrekten Format für SAP',
   });
 });
 

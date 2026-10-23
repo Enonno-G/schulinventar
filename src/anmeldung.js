@@ -33,6 +33,7 @@ const ALLE_GERAETEFELDER = [
   'kaufdatum',
   'inbetriebnahme',
   'garantie_bis',
+  'lieferant',
   'anmerkungen',
 ];
 export const GERAETEFELDER_JE_ROLLE = {

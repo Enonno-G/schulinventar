@@ -1,0 +1,28 @@
+<%- include('teile/kopf', { titel: 'Export' }) %>
+
+<h1>Export</h1>
+
+<section class="karte">
+  <h2>Listen als CSV-Datei für Excel</h2>
+  <p>Die Dateien öffnen sich mit einem Doppelklick direkt in Excel.</p>
+  <ul class="exportliste">
+    <li><a class="knopf" href="/geraete.csv">Alle Geräte (<%= zaehlung.geraete %>)</a></li>
+    <li><a class="knopf" href="/raeume.csv">Alle Räume (<%= zaehlung.raeume %>)</a></li>
+  </ul>
+  <p class="leise">
+    Nur bestimmte Geräte, z. B. alle Geräte eines Raumes oder mit bald ablaufender Garantie: In der
+    <a href="/geraete">Geräteliste</a> die Filter setzen und dann „Als CSV herunterladen“ klicken.
+  </p>
+</section>
+
+<section class="karte geplant">
+  <h2>Export für SAP</h2>
+  <p><strong>In Arbeit – geplant für Sprint 4.</strong></p>
+  <p>
+    Geänderte Daten (z. B. Raumänderungen nach der Inventur) als Datei in genau dem Format, das SAP beim Import
+    erwartet: mindestens Inventarnummer, Raumnummer und Inventurdatum.
+  </p>
+  <p class="leise">Pflichtenheft: Kap. 4 Export im korrekten Format für SAP</p>
+</section>
+
+<%- include('teile/fuss') %>

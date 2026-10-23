@@ -37,10 +37,13 @@ services:
       ADMIN_NAME: ${ADMIN_NAME:-Administrator}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      UPLOAD_DIR: /data/uploads
+      UPLOAD_MAX_MB: ${UPLOAD_MAX_MB:-10}
+      AUFBEWAHRUNG_JAHRE: ${AUFBEWAHRUNG_JAHRE:-7}
     ports:
       - '3000:3000'
     volumes:
-      # Hochgeladene Belege (ab Sprint 4)
+      # Hochgeladene Belege. Liegen in einem eigenen Speicher, damit sie beim Neubau des Containers erhalten bleiben.
       - uploads:/data/uploads
 
 volumes:

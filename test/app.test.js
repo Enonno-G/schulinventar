@@ -3,6 +3,9 @@
 // Nie auf die Datenbank mit echten Daten zeigen lassen!
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { after, before, describe, test } from 'node:test';
 
 const TEST_DATENBANK = process.env.TEST_DATABASE_URL;
@@ -12,17 +15,26 @@ describe('Schulinventar', { skip: !TEST_DATENBANK && 'TEST_DATABASE_URL ist nich
   const passwort = randomBytes(12).toString('base64url');
   const kennung = randomBytes(3).toString('hex'); // eindeutige Namen, falls die Testdatenbank schon Daten hat
   const cookies = {}; // Anmelde-Cookie je Rolle
+  // Hochgeladene Belege landen während der Tests in einem eigenen Ordner, der danach gelöscht wird
+  const uploadOrdner = fs.mkdtempSync(path.join(os.tmpdir(), 'schulinventar-test-'));
   let server, adresse, db, pool, app;
 
-  // Ruft eine Seite auf, wahlweise als angemeldete Rolle und mit Formulardaten
+  // Ruft eine Seite auf, wahlweise als angemeldete Rolle und mit Formulardaten.
+  // Ein Formular mit Datei wird als FormData übergeben (siehe belegFormular).
   async function aufrufen(rolle, methode, pfad, formular) {
     const kopfzeilen = {};
     if (rolle) kopfzeilen.cookie = cookies[rolle];
-    if (formular) kopfzeilen['content-type'] = 'application/x-www-form-urlencoded';
+    let inhalt;
+    if (formular instanceof FormData) {
+      inhalt = formular; // fetch setzt die passende Kopfzeile „multipart/form-data“ selbst
+    } else if (formular) {
+      kopfzeilen['content-type'] = 'application/x-www-form-urlencoded';
+      inhalt = new URLSearchParams(formular);
+    }
     const antwort = await fetch(adresse + pfad, {
       method: methode,
       headers: kopfzeilen,
-      body: formular ? new URLSearchParams(formular) : undefined,
+      body: inhalt,
       redirect: 'manual', // Weiterleitungen nicht automatisch folgen, damit wir sie prüfen können
     });
     return {
@@ -33,8 +45,20 @@ describe('Schulinventar', { skip: !TEST_DATENBANK && 'TEST_DATABASE_URL ist nich
     };
   }
 
+  // Formular „Beleg hochladen“ mit einer Datei aus den angegebenen Bytes
+  function belegFormular(felder, dateiname, bytes) {
+    const formular = new FormData();
+    for (const [feld, wert] of Object.entries(felder)) formular.append(feld, wert);
+    formular.append('datei', new Blob([bytes]), dateiname);
+    return formular;
+  }
+  const PDF = Buffer.from('%PDF-1.4\n% Testrechnung\n%%EOF\n');
+  const EXE = Buffer.from('MZ\x90\x00 Programm');
+
   before(async () => {
     process.env.DATABASE_URL = TEST_DATENBANK;
+    process.env.UPLOAD_DIR = uploadOrdner;
+    process.env.UPLOAD_MAX_MB = '1';
     const datenbank = await import('../src/datenbank.js');
     const { passwortHashen } = await import('../src/passwort.js');
     const { appErstellen } = await import('../src/app.js');
@@ -75,6 +99,7 @@ describe('Schulinventar', { skip: !TEST_DATENBANK && 'TEST_DATABASE_URL ist nich
     await new Promise((fertig) => (server ? server.close(fertig) : fertig()));
     app?.locals.sitzungsSpeicher.close();
     await pool?.end();
+    fs.rmSync(uploadOrdner, { recursive: true, force: true });
   });
 
   let raumA, raumB, geraetId;
@@ -138,9 +163,15 @@ describe('Schulinventar', { skip: !TEST_DATENBANK && 'TEST_DATABASE_URL ist nich
       raum_id: String(raumA),
       kaufdatum: '2026-09-01',
       garantie_bis: '2029-09-01',
+      lieferant: `Lieferant ${kennung}`,
     });
     assert.equal(angelegt.status, 302);
     geraetId = Number(angelegt.weiterleitung.split('/').pop());
+    const lieferant = await db.eine(
+      'SELECT l.name FROM geraete g JOIN lieferanten l ON l.id = g.lieferant_id WHERE g.id = $1',
+      [geraetId],
+    );
+    assert.equal(lieferant.name, `Lieferant ${kennung}`, 'neuer Lieferant wird automatisch angelegt');
 
     const gefunden = await aufrufen('lesen', 'GET', `/geraete?suche=INV-${kennung}`);
     assert.match(gefunden.html, /1 Gerät gefunden/);
@@ -210,7 +241,120 @@ describe('Schulinventar', { skip: !TEST_DATENBANK && 'TEST_DATABASE_URL ist nich
     assert.match(detail.html, /Lampe flackert/);
   });
 
+  let zweitesGeraetId, belegId;
+
+  test('T3: Rechnung hochladen und mehreren Geräten zuordnen', async () => {
+    const zweites = await aufrufen('rechnungswesen', 'POST', '/geraete/neu', {
+      inventarnummer: `INV2-${kennung}`,
+      bezeichnung: 'Beamer Deckenmontage',
+      raum_id: String(raumB),
+    });
+    zweitesGeraetId = Number(zweites.weiterleitung.split('/').pop());
+
+    const formular = belegFormular(
+      { art: 'rechnung', belegdatum: '2026-09-01', inventarnummern: `INV-${kennung}\nINV2-${kennung}` },
+      `Rechnung März ${kennung}.pdf`,
+      PDF,
+    );
+    const hochgeladen = await aufrufen('rechnungswesen', 'POST', '/belege/neu', formular);
+    assert.equal(hochgeladen.status, 302);
+    assert.match(hochgeladen.weiterleitung, /^\/belege\/\d+$/);
+    belegId = Number(hochgeladen.weiterleitung.split('/').pop());
+
+    // Bei beiden Geräten ist die Rechnung zu sehen, mit Umlaut im Dateinamen
+    for (const id of [geraetId, zweitesGeraetId]) {
+      const detail = await aufrufen('lesen', 'GET', `/geraete/${id}`);
+      assert.ok(detail.html.includes(`Rechnung März ${kennung}.pdf`), `Rechnung bei Gerät ${id}`);
+      assert.ok(detail.html.includes(`/belege/${belegId}/datei`));
+    }
+
+    // Die Datei kommt unverändert zurück
+    const datei = await aufrufen('lesen', 'GET', `/belege/${belegId}/datei`);
+    assert.equal(datei.status, 200);
+    assert.equal(datei.antwort.headers.get('content-type'), 'application/pdf');
+    assert.equal(datei.html, PDF.toString());
+
+    const beleg = await db.eine('SELECT aufbewahren_bis, pruefsumme FROM belege WHERE id = $1', [belegId]);
+    assert.equal(beleg.aufbewahren_bis, '2033-12-31', '7 Jahre ab Ende des Belegjahres');
+    assert.equal(beleg.pruefsumme.length, 64);
+  });
+
+  test('T8: unzulässige Dateien werden mit verständlicher Meldung abgelehnt', async () => {
+    const vorher = await db.eine('SELECT count(*) AS anzahl FROM belege');
+    const felder = { art: 'rechnung', inventarnummern: `INV-${kennung}` };
+
+    for (const dateiname of ['programm.exe', 'daten.json', 'angriff.script']) {
+      const { status, html } = await aufrufen(
+        'rechnungswesen',
+        'POST',
+        '/belege/neu',
+        belegFormular(felder, dateiname, EXE),
+      );
+      assert.equal(status, 400, dateiname);
+      assert.match(html, /Nur PDF-, JPG- und PNG-Dateien sind erlaubt/);
+    }
+
+    // Umbenannte .exe-Datei: Endung passt, Inhalt nicht
+    const getarnt = await aufrufen('rechnungswesen', 'POST', '/belege/neu', belegFormular(felder, 'rechnung.pdf', EXE));
+    assert.equal(getarnt.status, 400);
+    assert.match(getarnt.html, /ist aber keine echte PDF-Datei/);
+
+    // Zu groß (in den Tests ist die Grenze 1 MB)
+    const gross = Buffer.concat([PDF, Buffer.alloc(1024 * 1024)]);
+    const zuGross = await aufrufen('rechnungswesen', 'POST', '/belege/neu', belegFormular(felder, 'gross.pdf', gross));
+    assert.equal(zuGross.status, 400);
+    assert.match(zuGross.html, /Die Datei ist zu groß/);
+
+    const nachher = await db.eine('SELECT count(*) AS anzahl FROM belege');
+    assert.equal(nachher.anzahl, vorher.anzahl, 'nichts gespeichert');
+  });
+
+  test('unbekannte Inventarnummer beim Beleg wird gemeldet', async () => {
+    const formular = belegFormular({ art: 'lieferschein', inventarnummern: `GIBTSNICHT-${kennung}` }, 'ls.pdf', PDF);
+    const { status, html } = await aufrufen('rechnungswesen', 'POST', '/belege/neu', formular);
+    assert.equal(status, 400);
+    assert.match(html, new RegExp(`Diese Inventarnummern gibt es nicht: GIBTSNICHT-${kennung}`));
+  });
+
+  test('Zuordnung entfernen: Beleg bleibt gespeichert und kann nicht gelöscht werden', async () => {
+    const { weiterleitung } = await aufrufen('rechnungswesen', 'POST', `/belege/${belegId}/entfernen`, {
+      geraet_id: String(zweitesGeraetId),
+    });
+    assert.equal(weiterleitung, `/belege/${belegId}`);
+    const detail = await aufrufen('lesen', 'GET', `/geraete/${zweitesGeraetId}`);
+    assert.ok(!detail.html.includes(`/belege/${belegId}/datei`));
+    assert.match(detail.html, /Beleg-Zuordnung entfernt/, 'steht im Änderungsprotokoll des Geräts');
+
+    await assert.rejects(db.ausfuehren('DELETE FROM belege WHERE id = $1', [belegId]), /aufzubewahren/);
+  });
+
+  test('Lesezugriff und Facility-Management dürfen keine Belege hochladen', async () => {
+    for (const rolle of ['lesen', 'facility']) {
+      assert.equal((await aufrufen(rolle, 'GET', '/belege/neu')).status, 403);
+      const formular = belegFormular({ art: 'rechnung', inventarnummern: `INV-${kennung}` }, 'r.pdf', PDF);
+      assert.equal((await aufrufen(rolle, 'POST', '/belege/neu', formular)).status, 403);
+    }
+    // Ansehen dürfen alle
+    assert.equal((await aufrufen('lesen', 'GET', `/belege/${belegId}`)).status, 200);
+  });
+
+  test('Geräteliste als CSV-Datei für Excel, mit denselben Filtern', async () => {
+    const { status, html, antwort } = await aufrufen('lesen', 'GET', `/geraete.csv?suche=INV-${kennung}`);
+    assert.equal(status, 200);
+    assert.match(antwort.headers.get('content-type'), /^text\/csv/);
+    assert.match(antwort.headers.get('content-disposition'), /^attachment; filename="?geraete-[\d-]+\.csv"?$/);
+    const zeilen = html.replace('﻿', '').trim().split('\r\n');
+    assert.match(zeilen[0], /^Inventarnummer;Bezeichnung;Gerätetyp;/);
+    assert.equal(zeilen.length, 2, 'Kopfzeile und genau ein Gerät');
+    assert.match(zeilen[1], new RegExp(`^INV-${kennung};Beamer Deckenmontage;Beamer;`));
+    assert.match(zeilen[1], /01\.09\.2029/, 'Datum auf Deutsch');
+
+    const raeume = await aufrufen('lesen', 'GET', '/raeume.csv');
+    assert.ok(raeume.html.includes(`B-${kennung};`));
+  });
+
   test('Raum mit Geräten kann nicht gelöscht werden, leerer Raum schon', async () => {
+    // raumA ist leer: Das erste Gerät wurde nach raumB gebracht, das zweite steht von Anfang an dort
     const blockiert = await aufrufen('admin', 'POST', `/raeume/${raumB}/loeschen`);
     assert.equal(blockiert.weiterleitung, '/raeume');
     assert.ok(await db.eine('SELECT id FROM raeume WHERE id = $1', [raumB]), 'Raum mit Gerät bleibt');

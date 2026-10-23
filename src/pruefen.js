@@ -22,6 +22,17 @@ export function istDatum(wert) {
   return datum.toISOString().slice(0, 10) === wert; // fängt z. B. den 31.02. ab
 }
 
+// Mehrere Inventarnummern aus einem Textfeld, getrennt durch Zeilenumbruch, Komma oder Strichpunkt.
+// Ein Strichcode-Handscanner „tippt“ die Nummer und drückt danach Enter, so steht jede Nummer in einer eigenen Zeile.
+//   '1001\n1002, 1003\n1001' -> ['1001', '1002', '1003'] (doppelte nur einmal)
+export function inventarnummernAusText(wert) {
+  const nummern = String(wert ?? '')
+    .split(/[\r\n,;]+/)
+    .map((teil) => teil.trim())
+    .filter((teil) => teil !== '');
+  return [...new Set(nummern)];
+}
+
 // Hat das Formular Fehler? (fehler ist z. B. { nummer: 'Bitte eine Raumnummer eingeben' })
 export function hatFehler(fehler) {
   return Object.keys(fehler).length > 0;
