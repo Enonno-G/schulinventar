@@ -118,27 +118,33 @@ Solche Formulare packt das Paket **multer** aus. In [`src/seiten/belege.js`](../
 
 ## 5. Wo liegt was?
 
-| Datei / Ordner               | Was drin ist                                                                  |
-| ---------------------------- | ----------------------------------------------------------------------------- |
-| `src/seiten/geraete.js`      | alles zu Geräten: Liste, Suche, Anzeigen, Anlegen, Bearbeiten, CSV-Export     |
-| `src/seiten/raeume.js`       | alles zu Räumen                                                               |
-| `src/seiten/belege.js`       | Rechnungen, Lieferscheine, Garantiedokumente hochladen und Geräten zuordnen   |
-| `src/seiten/export.js`       | Seite „Export“ mit den Links zu den CSV-Dateien                               |
-| `src/seiten/benutzer.js`     | Benutzerverwaltung (nur Administrator)                                        |
-| `src/seiten/anmelden.js`     | Anmelden, Abmelden, Passwort ändern                                           |
-| `src/seiten/geplant.js`      | Platzhalter für Import, Inventur, Soll-Ist – mit Beschreibung, was dort kommt |
-| `src/dateien.js`             | hochgeladene Dateien prüfen (nur PDF, JPG, PNG) und speichern                 |
-| `src/csv.js`                 | Listen in eine CSV-Datei für Excel umwandeln                                  |
-| `views/…`                    | die zugehörigen Vorlagen, z. B. `views/geraete/liste.ejs`                     |
-| `views/teile/kopf.ejs`       | Kopf jeder Seite mit dem **Menü**                                             |
-| `public/style.css`           | Aussehen: Farben, Abstände, Handy-Ansicht                                     |
-| `src/anmeldung.js`           | Rollen und **wer was darf**                                                   |
-| `src/app.js`                 | welche Adresse wohin führt, Sicherheit, Sitzungen                             |
-| `src/datenbank.js`           | Verbindung zur Datenbank (`db.eine`, `db.alle`, `db.transaktion`)             |
-| `datenbank/001_tabellen.sql` | Aufbau aller Tabellen                                                         |
-| `src/testdaten.js`           | Testdaten                                                                     |
-| `test/`                      | automatische Tests                                                            |
-| `.env`                       | Passwörter und Einstellungen (nur auf deinem Rechner, nicht auf GitHub)       |
+| Datei / Ordner               | Was drin ist                                                                |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| `src/seiten/geraete.js`      | alles zu Geräten: Liste, Suche, Anzeigen, Anlegen, Bearbeiten, CSV-Export   |
+| `src/seiten/raeume.js`       | alles zu Räumen                                                             |
+| `src/seiten/belege.js`       | Rechnungen, Lieferscheine, Garantiedokumente hochladen und Geräten zuordnen |
+| `src/seiten/ausleihen.js`    | Geräte ausleihen und zurückgeben                                            |
+| `src/seiten/import.js`       | SAP-Import: hochladen, Vorschau, mit der Datenbank abgleichen, übernehmen   |
+| `src/seiten/inventur.js`     | Inventur: starten, Raum für Raum erfassen, abschließen                      |
+| `src/seiten/soll-ist.js`     | Soll-Ist-Vergleich: fehlt, anderer Raum, nicht in SAP                       |
+| `src/seiten/export.js`       | Seite „Export“ und die Datei für SAP (Format ganz oben: `SAP_FORMAT`)       |
+| `src/seiten/benutzer.js`     | Benutzerverwaltung (nur Administrator)                                      |
+| `src/seiten/anmelden.js`     | Anmelden, Abmelden, Passwort ändern                                         |
+| `src/sap-liste.js`           | SAP-Liste (CSV oder Excel) lesen und jede Zeile prüfen, ohne Datenbank      |
+| `src/dateien.js`             | hochgeladene Dateien prüfen (nur PDF, JPG, PNG) und speichern               |
+| `src/csv.js`                 | CSV-Dateien für Excel schreiben und CSV-Dateien lesen                       |
+| `public/scanner.js`          | Strichcode mit der Handy-Kamera scannen (läuft im Browser)                  |
+| `sicherung/sichern.sh`       | tägliche Datensicherung im Docker-Container                                 |
+| `views/…`                    | die zugehörigen Vorlagen, z. B. `views/geraete/liste.ejs`                   |
+| `views/teile/kopf.ejs`       | Kopf jeder Seite mit dem **Menü**                                           |
+| `public/style.css`           | Aussehen: Farben, Abstände, Handy-Ansicht                                   |
+| `src/anmeldung.js`           | Rollen und **wer was darf**                                                 |
+| `src/app.js`                 | welche Adresse wohin führt, Sicherheit, Sitzungen                           |
+| `src/datenbank.js`           | Verbindung zur Datenbank (`db.eine`, `db.alle`, `db.transaktion`)           |
+| `datenbank/001_tabellen.sql` | Aufbau aller Tabellen, `002_…` die Ergänzungen für Import und Ausleihe      |
+| `src/testdaten.js`           | Testdaten                                                                   |
+| `test/`                      | automatische Tests                                                          |
+| `.env`                       | Passwörter und Einstellungen (nur auf deinem Rechner, nicht auf GitHub)     |
 
 ## 6. JavaScript in fünf Minuten
 
@@ -244,5 +250,9 @@ Gut beschreiben lassen sich:
 - das Datenmodell mit Soll- und Ist-Stand ([`datenmodell.md`](datenmodell.md)),
 - die Sicherheit: Passwort-Hash, Rechte am Server, Platzhalter gegen SQL-Injection, `<%= %>` gegen eingeschleuste
   Skripte, automatische Abmeldung (README, Abschnitt _Sicherheit_),
-- die automatischen Tests, die u. a. die Abnahme-Testfälle T3, T4, T7 und T8 prüfen
-  ([`test/app.test.js`](../test/app.test.js)).
+- der SAP-Import in drei Schritten (Hochladen, Vorschau, Übernehmen) und die Regeln beim Abgleich: Abgleich über die
+  Inventarnummer, SAP ist führend, bei uns ergänzte Daten bleiben (Kommentar oben in
+  [`src/seiten/import.js`](../src/seiten/import.js)),
+- der Kreislauf mit SAP: Import → Inventur → Soll-Ist-Vergleich → Export für SAP → wieder Import,
+- die automatischen Tests, die alle Abnahme-Testfälle T1–T8 prüfen ([`test/app.test.js`](../test/app.test.js),
+  Übersicht in [`testprotokoll.md`](testprotokoll.md)).
