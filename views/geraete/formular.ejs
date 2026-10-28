@@ -82,13 +82,26 @@
     <% if (fehler.garantie_bis) { %><small class="fehler"><%= fehler.garantie_bis %></small><% } %>
   </label>
 
+  <label class="feld">
+    <span>Lieferant</span>
+    <input name="lieferant" value="<%= geraet.lieferant %>" list="lieferanten" <%= gesperrt('lieferant') %>>
+    <%# Vorschläge beim Tippen: alle Lieferanten, die es schon gibt. Ein neuer Name wird automatisch angelegt. %>
+    <datalist id="lieferanten">
+      <% for (const lieferant of lieferanten) { %><option value="<%= lieferant %>"><% } %>
+    </datalist>
+    <% if (fehler.lieferant) { %><small class="fehler"><%= fehler.lieferant %></small><% } %>
+  </label>
+
   <label class="feld ganze-breite">
     <span>Anmerkungen, z. B. Schäden oder Reparaturen</span>
     <textarea name="anmerkungen" rows="4" <%= gesperrt('anmerkungen') %>><%= geraet.anmerkungen %></textarea>
     <% if (fehler.anmerkungen) { %><small class="fehler"><%= fehler.anmerkungen %></small><% } %>
   </label>
 
-  <p class="leise ganze-breite">Lieferant und Belege kommen in Sprint 4.</p>
+  <p class="leise ganze-breite">
+    Rechnungen, Lieferscheine und Garantiedokumente werden nach dem Speichern in der Detailansicht des Geräts
+    hochgeladen.
+  </p>
 
   <div class="knoepfe ganze-breite">
     <a class="knopf" href="<%= istNeu ? '/geraete' : '/geraete/' + geraet.id %>">Abbrechen</a>

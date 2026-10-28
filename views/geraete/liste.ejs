@@ -7,6 +7,14 @@
   <% } %>
 </div>
 
+<% if (garantieBaldAnzahl > 0 && !filter.garantieBald) { %>
+  <%# Erinnerung bei ablaufender Garantie (Pflichtenheft Kap. 4, KANN-Anforderung) %>
+  <p class="hinweis">
+    Bei <%= garantieBaldAnzahl %> <%= garantieBaldAnzahl === 1 ? 'Gerät endet' : 'Geräten endet' %> die Garantie in den
+    nächsten 30 Tagen. <a href="/geraete?garantie=bald">Anzeigen</a>
+  </p>
+<% } %>
+
 <%# Suche und Filter: ein normales Formular. method="get" schreibt die Werte in die Adresse,
     z. B. /geraete?suche=beamer&raum=3 – so funktionieren auch „Zurück“ im Browser und Lesezeichen. %>
 <form method="get" action="/geraete" class="karte filter">
@@ -36,13 +44,21 @@
     <span>Garantie endet bis</span>
     <input type="date" name="garantie_bis" value="<%= filter.garantieBis %>">
   </label>
+  <label class="haekchen">
+    <input type="checkbox" name="garantie" value="bald" <%= filter.garantieBald ? 'checked' : '' %>>
+    Garantie endet in den nächsten 30 Tagen
+  </label>
   <div class="knoepfe">
     <a class="knopf" href="/geraete">Zurücksetzen</a>
     <button class="knopf haupt">Suchen</button>
   </div>
 </form>
 
-<p class="leise"><%= anzahl %> <%= anzahl === 1 ? 'Gerät' : 'Geräte' %> gefunden</p>
+<div class="ergebniszeile">
+  <p class="leise"><%= anzahl %> <%= anzahl === 1 ? 'Gerät' : 'Geräte' %> gefunden</p>
+  <%# Lädt genau diese Liste (mit denselben Filtern, alle Seiten) als Datei für Excel herunter %>
+  <% if (anzahl > 0) { %><a class="knopf" href="<%= csvAdresse %>">Als CSV herunterladen</a><% } %>
+</div>
 
 <div class="tabelle">
   <table>

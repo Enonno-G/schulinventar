@@ -1,0 +1,38 @@
+<%- include('../teile/kopf', { titel: inventur.name }) %>
+
+<div class="seitenkopf">
+  <h1><%= inventur.name %></h1>
+  <div class="knoepfe">
+    <a class="knopf" href="/soll-ist?inventur=<%= inventur.id %>">Soll-Ist-Vergleich</a>
+    <form method="post" action="/inventur/<%= inventur.id %>/abschliessen"
+          data-bestaetigen="Inventur abschließen? Danach kann nichts mehr erfasst werden. Gefundene Geräte bekommen das Inventurdatum, Geräte aus anderen Räumen werden in den Raum gebucht, in dem sie gefunden wurden.">
+      <button class="knopf haupt">Inventur abschließen</button>
+    </form>
+  </div>
+</div>
+<p class="leise">Begonnen am <%= datumZeit(inventur.begonnen_am) %>. Wählen Sie den Raum, in dem Sie gerade sind.</p>
+
+<div class="tabelle">
+  <table>
+    <thead>
+      <tr><th>Raum</th><th class="zahl">Geräte laut Soll</th><th class="zahl">Erfasst</th><th>Stand</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% for (const raum of raeume) { %>
+        <tr>
+          <td><%= raumName(raum.nummer, raum.bezeichnung) %></td>
+          <td class="zahl"><%= raum.soll %></td>
+          <td class="zahl"><%= raum.erfasst %></td>
+          <td>
+            <% if (raum.erfasst === 0) { %><span class="leise">noch nicht begonnen</span>
+            <% } else if (raum.erfasst >= raum.soll) { %>✓ erfasst
+            <% } else { %>läuft<% } %>
+          </td>
+          <td class="aktionen"><a class="knopf" href="/inventur/<%= inventur.id %>/raum/<%= raum.id %>">Erfassen</a></td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../teile/fuss') %>

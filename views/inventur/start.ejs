@@ -1,0 +1,41 @@
+<%- include('../teile/kopf', { titel: 'Inventur' }) %>
+
+<h1>Inventur</h1>
+
+<form method="post" action="/inventur/neu" class="karte schmal">
+  <h2>Neue Inventur starten</h2>
+  <p class="leise">
+    Danach gehen Sie Raum für Raum durch und geben die Inventarnummern ein (oder scannen die Strichcodes).
+    Am Ende zeigt der Soll-Ist-Vergleich, was fehlt oder woanders steht.
+  </p>
+  <label class="feld">
+    <span>Name</span>
+    <input name="name" value="<%= vorschlag %>" maxlength="100">
+  </label>
+  <div class="knoepfe">
+    <button class="knopf haupt">Inventur starten</button>
+  </div>
+</form>
+
+<h2>Frühere Inventuren</h2>
+<div class="tabelle">
+  <table>
+    <thead><tr><th>Name</th><th>Begonnen</th><th>Abgeschlossen</th><th class="zahl">Erfasst</th><th></th></tr></thead>
+    <tbody>
+      <% for (const inventur of fruehere) { %>
+        <tr>
+          <td><%= inventur.name %></td>
+          <td><%= datumZeit(inventur.begonnen_am) %> (<%= inventur.begonnen_von_name ?? '–' %>)</td>
+          <td><%= datumZeit(inventur.abgeschlossen_am) %></td>
+          <td class="zahl"><%= inventur.erfasst %></td>
+          <td class="aktionen"><a href="/soll-ist?inventur=<%= inventur.id %>">Soll-Ist-Vergleich</a></td>
+        </tr>
+      <% } %>
+      <% if (fruehere.length === 0) { %>
+        <tr><td colspan="5" class="leer">Noch keine Inventur.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../teile/fuss') %>

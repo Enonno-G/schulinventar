@@ -1,0 +1,50 @@
+<%- include('../teile/kopf', { titel: 'SAP-Import' }) %>
+
+<h1>SAP-Import</h1>
+
+<form method="post" action="/import" enctype="multipart/form-data" class="karte schmal">
+  <h2>1. Liste aus SAP hochladen</h2>
+  <p class="leise">
+    Excel-Datei (.xlsx) oder CSV-Datei. Im nächsten Schritt wählen Sie, welche Spalte was enthält, und sehen eine
+    Vorschau. Geändert wird erst, wenn Sie auf „Übernehmen“ klicken.
+  </p>
+  <label class="feld">
+    <span>Datei</span>
+    <input type="file" name="datei" accept=".xlsx,.csv,.txt">
+    <% if (fehler) { %><small class="fehler"><%= fehler %></small><% } %>
+  </label>
+  <div class="knoepfe">
+    <button class="knopf haupt">Hochladen und prüfen</button>
+  </div>
+</form>
+
+<h2>Letzte Importe</h2>
+<div class="tabelle">
+  <table>
+    <thead>
+      <tr><th>Datei</th><th>Hochgeladen</th><th>Von</th><th>Status</th><th>Ergebnis</th></tr>
+    </thead>
+    <tbody>
+      <% const STATUS = { vorschau: 'Vorschau – noch nicht übernommen', uebernommen: 'Übernommen', abgebrochen: 'Abgebrochen' }; %>
+      <% for (const eintrag of importe) { %>
+        <tr>
+          <td><a href="/import/<%= eintrag.id %>"><%= eintrag.dateiname %></a></td>
+          <td><%= datumZeit(eintrag.angelegt_am) %></td>
+          <td><%= eintrag.benutzer ?? '–' %></td>
+          <td><%= STATUS[eintrag.status] %></td>
+          <td>
+            <% if (eintrag.ergebnis) { %>
+              <%= eintrag.ergebnis.neu %> neu, <%= eintrag.ergebnis.geaendert %> geändert,
+              <%= eintrag.ergebnis.unveraendert %> unverändert, <%= eintrag.ergebnis.fehlerhaft %> fehlerhaft
+            <% } else { %>–<% } %>
+          </td>
+        </tr>
+      <% } %>
+      <% if (importe.length === 0) { %>
+        <tr><td colspan="5" class="leer">Noch kein Import.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../teile/fuss') %>

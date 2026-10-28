@@ -4,3 +4,7 @@ node_modules
 test
 docs
 *.log
+uploads
+sicherungen
+sicherung
+Caddyfile

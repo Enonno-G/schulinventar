@@ -19,6 +19,7 @@ export const RECHTE = {
   belege_hochladen: ['admin', 'rechnungswesen'],
   sap_import_export: ['admin', 'rechnungswesen'],
   inventur: ['admin', 'facility'],
+  ausleihe: ['admin', 'rechnungswesen', 'facility'],
 };
 
 // Welche Gerätefelder eine Rolle ändern darf. Facility-Management weist Geräte Räumen zu und
@@ -33,6 +34,7 @@ const ALLE_GERAETEFELDER = [
   'kaufdatum',
   'inbetriebnahme',
   'garantie_bis',
+  'lieferant',
   'anmerkungen',
 ];
 export const GERAETEFELDER_JE_ROLLE = {

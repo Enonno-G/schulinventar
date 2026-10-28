@@ -1,7 +1,8 @@
 # Datenmodell
 
-Grundlage ist das Pflichtenheft, Kapitel 4 (Speicherung in der DB). Alle Tabellen stehen in
-[`datenbank/001_tabellen.sql`](../datenbank/001_tabellen.sql).
+Grundlage ist das Pflichtenheft, Kapitel 4 (Speicherung in der DB). Die Tabellen stehen in
+[`datenbank/001_tabellen.sql`](../datenbank/001_tabellen.sql), die Ergänzungen für SAP-Import und Ausleihe in
+[`datenbank/002_import_und_ausleihe.sql`](../datenbank/002_import_und_ausleihe.sql).
 
 ## Soll-Stand und Ist-Stand
 
@@ -31,6 +32,15 @@ erDiagram
     geraete |o--o{ inventur_erfassungen : "erkannt als"
     benutzer |o--o{ protokoll : "ändert"
     benutzer |o--o{ importe : "importiert"
+    geraete ||--o{ ausleihen : "wird ausgeliehen"
+
+    ausleihen {
+        int id PK
+        int geraet_id FK
+        text ausgeliehen_an
+        date bis
+        timestamptz zurueck_am "leer = noch ausgeliehen"
+    }
 
     benutzer {
         int id PK
@@ -107,6 +117,9 @@ erDiagram
         int id PK
         text dateiname
         text status "vorschau, uebernommen, abgebrochen"
+        jsonb spalten "Überschriften der Datei"
+        jsonb zeilen "gelesene Zeilen bis zur Übernahme"
+        jsonb zuordnung "Spalte zu Feld"
         jsonb ergebnis
     }
     import_zuordnungen {
@@ -133,6 +146,8 @@ erDiagram
 | Jedes Gerät hat genau einen Raum                     | `geraete.raum_id NOT NULL`                                          |
 | Raum mit Geräten kann nicht gelöscht werden          | `ON DELETE RESTRICT` (zusätzlich Prüfung in `src/seiten/raeume.js`) |
 | Ein Beleg gehört zu mehreren Geräten                 | Zwischentabelle `geraet_belege`                                     |
+| Ein Gerät ist nie zweimal gleichzeitig ausgeliehen   | Index `ausleihen_nur_eine_offene`                                   |
+| Eine Inventarnummer pro Inventur nur einmal erfasst  | `UNIQUE (inventur_id, inventarnummer)`                              |
 | Belege in der Aufbewahrungsfrist sind nicht löschbar | Trigger `belege_nicht_loeschen`                                     |
 | Änderungsprotokoll ist nicht veränderbar             | Trigger `protokoll_nicht_aendern`                                   |
 | Nur PDF, JPG und PNG                                 | `CHECK` auf `belege.dateityp`                                       |
