@@ -8,21 +8,50 @@
   <ul class="exportliste">
     <li><a class="knopf" href="/geraete.csv">Alle Geräte (<%= zaehlung.geraete %>)</a></li>
     <li><a class="knopf" href="/raeume.csv">Alle Räume (<%= zaehlung.raeume %>)</a></li>
+    <li><a class="knopf" href="/geraete.csv?garantie=bald">Garantie endet in den nächsten 30 Tagen</a></li>
+    <li><a class="knopf" href="/soll-ist.csv">Abweichungen der letzten Inventur</a></li>
   </ul>
   <p class="leise">
-    Nur bestimmte Geräte, z. B. alle Geräte eines Raumes oder mit bald ablaufender Garantie: In der
-    <a href="/geraete">Geräteliste</a> die Filter setzen und dann „Als CSV herunterladen“ klicken.
+    Nur bestimmte Geräte, z. B. alle Geräte eines Raumes: In der <a href="/geraete">Geräteliste</a> die Filter setzen
+    und dann „Als CSV herunterladen“ klicken.
   </p>
 </section>
 
-<section class="karte geplant">
-  <h2>Export für SAP</h2>
-  <p><strong>In Arbeit – geplant für Sprint 4.</strong></p>
-  <p>
-    Geänderte Daten (z. B. Raumänderungen nach der Inventur) als Datei in genau dem Format, das SAP beim Import
-    erwartet: mindestens Inventarnummer, Raumnummer und Inventurdatum.
-  </p>
-  <p class="leise">Pflichtenheft: Kap. 4 Export im korrekten Format für SAP</p>
-</section>
+<% if (darf('sap_import_export')) { %>
+  <section class="karte">
+    <div class="seitenkopf">
+      <h2>Export für SAP (<%= sapAenderungen.length %> Geräte)</h2>
+      <% if (sapAenderungen.length > 0) { %>
+        <a class="knopf haupt" href="/export/sap.csv">Datei für SAP herunterladen</a>
+      <% } %>
+    </div>
+    <p>
+      Enthält alle Geräte, deren Raum bei uns anders ist als in SAP, die noch nicht in SAP stehen oder die seit dem
+      letzten SAP-Import inventiert wurden: Inventarnummer, Raumnummer und Inventurdatum. Die Datei spielt eine
+      berechtigte Person der Schule in SAP ein. Danach die neue Liste aus SAP wieder <a href="/import">importieren</a>.
+    </p>
+    <% if (sapAenderungen.length > 0) { %>
+      <div class="tabelle">
+        <table>
+          <thead><tr><th>Inventarnummer</th><th>Bezeichnung</th><th>Raum laut SAP</th><th>Raum jetzt</th><th>Inventurdatum</th></tr></thead>
+          <tbody>
+            <% for (const geraet of sapAenderungen.slice(0, 100)) { %>
+              <tr>
+                <td><a href="/geraete/<%= geraet.id %>"><%= geraet.inventarnummer %></a></td>
+                <td><%= geraet.bezeichnung %></td>
+                <td><%= geraet.sap_raumnummer ?? 'nicht in SAP' %></td>
+                <td><%= geraet.raumnummer %></td>
+                <td><%= datum(geraet.letzte_inventur) %></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <% if (sapAenderungen.length > 100) { %><p class="leise">… und <%= sapAenderungen.length - 100 %> weitere (alle in der Datei).</p><% } %>
+    <% } else { %>
+      <p class="leise">Zurzeit gibt es keine Änderungen für SAP.</p>
+    <% } %>
+  </section>
+<% } %>
 
 <%- include('teile/fuss') %>

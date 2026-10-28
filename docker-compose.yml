@@ -1,6 +1,7 @@
-# Ganze Anwendung starten:          docker compose up --build    ->  http://localhost:3000
+# Ganze Anwendung starten:          docker compose up -d --build    ->  http://localhost:3000
+# Mit HTTPS (Schulserver):          docker compose --profile https up -d --build
 # Nur die Datenbank (Entwicklung):  docker compose up -d db
-# Werte kommen aus der Datei .env (Vorlage: .env.example)
+# Werte kommen aus der Datei .env (Vorlage: .env.example). Anleitung für den Schulserver: docs/installation.md
 services:
   db:
     image: postgres:17-alpine
@@ -46,6 +47,43 @@ services:
       # Hochgeladene Belege. Liegen in einem eigenen Speicher, damit sie beim Neubau des Containers erhalten bleiben.
       - uploads:/data/uploads
 
+  # Tägliche Sicherung von Datenbank und Belegen in den Ordner ./sicherungen (Script: sicherung/sichern.sh)
+  sicherung:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER:-schulinventar}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-schulinventar}
+      SICHERUNG_TAGE: ${SICHERUNG_TAGE:-30}
+      TZ: Europe/Vienna
+    volumes:
+      - ./sicherung/sichern.sh:/sichern.sh:ro
+      - ./sicherungen:/sicherungen
+      - uploads:/data/uploads:ro
+    entrypoint: ['sh', '/sichern.sh']
+
+  # HTTPS für den Echtbetrieb (Pflichtenheft Kap. 5). Startet nur mit „--profile https“, Einstellungen im Caddyfile.
+  https:
+    image: caddy:2-alpine
+    profiles: [https]
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-daten:/data
+
 volumes:
   db-data:
   uploads:
+  caddy-daten:

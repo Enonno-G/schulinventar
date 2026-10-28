@@ -22,6 +22,21 @@ export function istDatum(wert) {
   return datum.toISOString().slice(0, 10) === wert; // fängt z. B. den 31.02. ab
 }
 
+// Ein Datum aus einer SAP-Liste in das Format JJJJ-MM-TT bringen. Erlaubt sind z. B.
+// '15.03.2021', '5.3.2021', '2021-03-15' und '20210315' (so speichert SAP intern ein Datum).
+// Ergebnis: das Datum, null (Feld leer) oder false (kein gültiges Datum)
+export function datumLesen(wert) {
+  const eingabe = text(wert);
+  if (!eingabe) return null;
+  let iso = eingabe;
+  const deutsch = eingabe.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  const sap = eingabe.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (deutsch) iso = `${deutsch[3]}-${deutsch[2].padStart(2, '0')}-${deutsch[1].padStart(2, '0')}`;
+  if (sap) iso = `${sap[1]}-${sap[2]}-${sap[3]}`;
+  if (!istDatum(iso)) return false;
+  return iso;
+}
+
 // Mehrere Inventarnummern aus einem Textfeld, getrennt durch Zeilenumbruch, Komma oder Strichpunkt.
 // Ein Strichcode-Handscanner „tippt“ die Nummer und drückt danach Enter, so steht jede Nummer in einer eigenen Zeile.
 //   '1001\n1002, 1003\n1001' -> ['1001', '1002', '1003'] (doppelte nur einmal)

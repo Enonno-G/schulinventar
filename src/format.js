@@ -1,8 +1,17 @@
 // Anzeige von Werten auf Deutsch. Diese Funktionen können alle Seiten-Vorlagen direkt verwenden.
 
 // '2026-10-14' -> '14.10.2026'
+// Auch ein Zeitpunkt (z. B. „erfasst am“) geht, dann zählt der Tag in Österreich.
 export function datum(wert) {
   if (!wert) return '–';
+  if (wert instanceof Date) {
+    return wert.toLocaleDateString('de-AT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'Europe/Vienna',
+    });
+  }
   const [jahr, monat, tag] = String(wert).slice(0, 10).split('-');
   return `${tag}.${monat}.${jahr}`;
 }
@@ -40,6 +49,10 @@ export const FELDNAMEN = {
   lieferant: 'Lieferant',
   beleg: 'Beleg',
   herkunft: 'Herkunft',
+  sap_raumnummer: 'Raum laut SAP',
+  letzte_inventur: 'Letzte Inventur',
+  ausgeliehen_an: 'Ausgeliehen an',
+  bis: 'Bis',
   nummer: 'Raumnummer',
   stockwerk: 'Stockwerk',
   name: 'Name',
@@ -57,6 +70,8 @@ export const BEZEICHNUNGEN = {
   passwort_zurueckgesetzt: 'Passwort zurückgesetzt',
   beleg_zugeordnet: 'Beleg zugeordnet',
   beleg_entfernt: 'Beleg-Zuordnung entfernt',
+  ausgeliehen: 'Ausgeliehen',
+  zurueckgegeben: 'Zurückgegeben',
   manuell: 'Manuell',
   import: 'SAP-Import',
   inventur: 'Inventur',
@@ -67,11 +82,24 @@ export const BEZEICHNUNGEN = {
   sonstiges: 'Sonstiges',
 };
 
+// Felder, deren Wert ein Datum ist
+const DATUMSFELDER = [
+  'anschaffungsdatum',
+  'kaufdatum',
+  'inbetriebnahme',
+  'garantie_bis',
+  'belegdatum',
+  'aufbewahren_bis',
+  'letzte_inventur',
+  'bis',
+];
+
 // Ein Wert aus dem Änderungsprotokoll lesbar machen
 export function wertAnzeigen(feld, wert) {
   if (wert === null || wert === undefined || wert === '') return '–';
   if (wert === true) return 'ja';
   if (wert === false) return 'nein';
-  if (feld.endsWith('datum') || feld === 'garantie_bis' || feld === 'inbetriebnahme') return datum(wert);
+  if (DATUMSFELDER.includes(feld)) return datum(wert);
+  if (feld === 'herkunft') return BEZEICHNUNGEN[wert] ?? wert;
   return String(wert);
 }

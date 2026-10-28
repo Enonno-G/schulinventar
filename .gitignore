@@ -8,5 +8,8 @@ node_modules/
 # Hochgeladene Belege beim Entwickeln – echte Rechnungen gehören nicht auf GitHub
 uploads/
 
+# Datensicherungen (enthalten echte Daten)
+sicherungen/
+
 # Arbeitsordner von Claude Code
 .claude/worktrees/

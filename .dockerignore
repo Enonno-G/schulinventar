@@ -5,3 +5,6 @@ test
 docs
 *.log
 uploads
+sicherungen
+sicherung
+Caddyfile

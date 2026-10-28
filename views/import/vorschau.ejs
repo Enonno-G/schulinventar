@@ -1,0 +1,139 @@
+<%#
+  Schritt 2 und 3 des SAP-Imports: Spalten zuordnen, Vorschau ansehen, übernehmen oder abbrechen.
+  pruefung und abgleich sind leer (null), solange noch ein Pflichtfeld keine Spalte hat.
+%>
+<%- include('../teile/kopf', { titel: 'SAP-Import ' + importDaten.dateiname }) %>
+
+<p class="pfad"><a href="/import">SAP-Import</a> / <%= importDaten.dateiname %></p>
+<h1>Import prüfen: <%= importDaten.dateiname %></h1>
+<p class="leise"><%= importDaten.zeilen.length %> Zeilen gelesen. Es wurde noch nichts geändert.</p>
+
+<form method="post" action="/import/<%= importDaten.id %>/zuordnung" class="karte formular">
+  <h2 class="ganze-breite">2. Welche Spalte enthält was?</h2>
+  <% for (const { feld, titel, pflicht } of IMPORT_FELDER) { %>
+    <label class="feld">
+      <span><%= titel %><%= pflicht ? ' *' : '' %></span>
+      <select name="<%= feld %>">
+        <option value="">– nicht in der Liste –</option>
+        <% for (const spalte of importDaten.spalten) { %>
+          <option <%= importDaten.zuordnung[feld] === spalte ? 'selected' : '' %>><%= spalte %></option>
+        <% } %>
+      </select>
+    </label>
+  <% } %>
+  <div class="knoepfe ganze-breite">
+    <button class="knopf">Zuordnung anwenden</button>
+  </div>
+
+  <details class="ganze-breite">
+    <summary>So sieht die Datei aus (erste 5 Zeilen)</summary>
+    <div class="tabelle">
+      <table>
+        <thead><tr><th>Zeile</th><% for (const spalte of importDaten.spalten) { %><th><%= spalte %></th><% } %></tr></thead>
+        <tbody>
+          <% for (const zeile of importDaten.zeilen.slice(0, 5)) { %>
+            <tr><td><%= zeile.nr %></td><% for (const wert of zeile.werte) { %><td><%= wert %></td><% } %></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </details>
+</form>
+
+<% if (fehlend.length > 0) { %>
+  <p class="warnung">Bitte zuerst eine Spalte auswählen für: <%= fehlend.join(', ') %>.</p>
+<% } else { %>
+  <section class="karte">
+    <h2>3. Vorschau</h2>
+    <div class="zahlen">
+      <div class="zahl-kasten"><strong><%= abgleich.neu.length %></strong> neu</div>
+      <div class="zahl-kasten"><strong><%= abgleich.geaendert.length %></strong> geändert</div>
+      <div class="zahl-kasten"><strong><%= abgleich.unveraendert %></strong> unverändert</div>
+      <div class="zahl-kasten <%= pruefung.fehlerhaft.length > 0 ? 'auffaellig' : '' %>"><strong><%= pruefung.fehlerhaft.length %></strong> fehlerhaft</div>
+    </div>
+    <% if (abgleich.neueRaeume.length > 0) { %>
+      <p>Diese Räume gibt es noch nicht, sie werden angelegt: <%= abgleich.neueRaeume.join(', ') %></p>
+    <% } %>
+    <% if (pruefung.fehlerhaft.length > 0) { %>
+      <p class="leise">Fehlerhafte Zeilen werden nicht übernommen. Sie können sie in SAP bzw. in der Datei korrigieren und die Liste dann noch einmal importieren.</p>
+    <% } %>
+
+    <form method="post" action="/import/<%= importDaten.id %>/abbrechen" id="abbrechen"></form>
+    <form method="post" action="/import/<%= importDaten.id %>/uebernehmen"
+          data-bestaetigen="Import jetzt übernehmen? <%= abgleich.neu.length %> Geräte werden angelegt und <%= abgleich.geaendert.length %> geändert.">
+      <div class="knoepfe">
+        <button class="knopf" form="abbrechen">Abbrechen</button>
+        <button class="knopf haupt" <%= abgleich.neu.length + abgleich.geaendert.length === 0 ? 'disabled' : '' %>>Übernehmen</button>
+      </div>
+    </form>
+  </section>
+
+  <% if (pruefung.fehlerhaft.length > 0) { %>
+    <section class="karte">
+      <h2>Fehlerhafte Zeilen (<%= pruefung.fehlerhaft.length %>)</h2>
+      <div class="tabelle">
+        <table>
+          <thead><tr><th>Zeile</th><th>Inventarnummer</th><th>Fehler</th></tr></thead>
+          <tbody>
+            <% for (const zeile of pruefung.fehlerhaft.slice(0, 200)) { %>
+              <tr><td><%= zeile.nr %></td><td><%= zeile.inventarnummer ?? '–' %></td><td><%= zeile.fehler.join(', ') %></td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <% if (pruefung.fehlerhaft.length > 200) { %><p class="leise">… und <%= pruefung.fehlerhaft.length - 200 %> weitere.</p><% } %>
+    </section>
+  <% } %>
+
+  <% if (abgleich.geaendert.length > 0) { %>
+    <section class="karte">
+      <h2>Was sich ändert (<%= abgleich.geaendert.length %> Geräte)</h2>
+      <div class="tabelle">
+        <table>
+          <thead><tr><th>Zeile</th><th>Inventarnummer</th><th>Änderungen</th></tr></thead>
+          <tbody>
+            <% for (const zeile of abgleich.geaendert.slice(0, 100)) { %>
+              <tr>
+                <td><%= zeile.nr %></td>
+                <td><a href="/geraete/<%= zeile.vorher.id %>"><%= zeile.geraet.inventarnummer %></a></td>
+                <td>
+                  <ul class="aenderungen">
+                    <% for (const [feld, aenderung] of Object.entries(zeile.aenderungen)) { %>
+                      <li><strong><%= FELDNAMEN[feld] ?? feld %>:</strong> <%= wertAnzeigen(feld, aenderung.vorher) %> → <%= wertAnzeigen(feld, aenderung.nachher) %></li>
+                    <% } %>
+                  </ul>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <% if (abgleich.geaendert.length > 100) { %><p class="leise">… und <%= abgleich.geaendert.length - 100 %> weitere.</p><% } %>
+    </section>
+  <% } %>
+
+  <% if (abgleich.neu.length > 0) { %>
+    <section class="karte">
+      <h2>Neue Geräte (<%= abgleich.neu.length %>)</h2>
+      <div class="tabelle">
+        <table>
+          <thead><tr><th>Zeile</th><th>Inventarnummer</th><th>Bezeichnung</th><th>Raum</th><th>Anschaffungsdatum</th></tr></thead>
+          <tbody>
+            <% for (const zeile of abgleich.neu.slice(0, 100)) { %>
+              <tr>
+                <td><%= zeile.nr %></td>
+                <td><%= zeile.geraet.inventarnummer %></td>
+                <td><%= zeile.geraet.bezeichnung %></td>
+                <td><%= zeile.geraet.raumnummer %></td>
+                <td><%= datum(zeile.geraet.anschaffungsdatum) %></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <% if (abgleich.neu.length > 100) { %><p class="leise">… und <%= abgleich.neu.length - 100 %> weitere.</p><% } %>
+    </section>
+  <% } %>
+<% } %>
+
+<%- include('../teile/fuss') %>

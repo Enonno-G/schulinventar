@@ -154,6 +154,7 @@ function filterLesen(adresse) {
     raum: nummer(adresse.raum),
     typ: text(adresse.typ),
     garantieBis: istDatum(adresse.garantie_bis) ? adresse.garantie_bis : null,
+    garantieBald: adresse.garantie === 'bald', // Garantie endet in den nächsten 30 Tagen
     seite: nummer(adresse.seite) ?? 1,
   };
 }
@@ -165,6 +166,7 @@ function filterAlsAdresse(filter) {
   if (filter.raum) parameter.set('raum', filter.raum);
   if (filter.typ) parameter.set('typ', filter.typ);
   if (filter.garantieBis) parameter.set('garantie_bis', filter.garantieBis);
+  if (filter.garantieBald) parameter.set('garantie', 'bald');
   return parameter.toString();
 }
 
@@ -191,6 +193,10 @@ function filterBedingungen(filter) {
   if (filter.garantieBis) {
     werte.push(filter.garantieBis);
     bedingungen.push('g.garantie_bis <= $' + werte.length);
+  }
+  if (filter.garantieBald) {
+    // Pflichtenheft Kap. 4 „Erinnerung bei ablaufender Garantie“: Garantie endet zwischen heute und in 30 Tagen
+    bedingungen.push('g.garantie_bis BETWEEN current_date AND current_date + 30');
   }
   let where = '';
   if (bedingungen.length > 0) where = 'WHERE ' + bedingungen.join(' AND ');
@@ -223,6 +229,11 @@ router.get('/geraete', async (req, res) => {
     return '/geraete?' + parameter.toString();
   }
 
+  // Erinnerung oben auf der Seite: Bei wie vielen Geräten endet die Garantie in den nächsten 30 Tagen?
+  const garantie = await db.eine(
+    'SELECT count(*) AS anzahl FROM geraete WHERE garantie_bis BETWEEN current_date AND current_date + 30',
+  );
+
   res.render('geraete/liste', {
     geraete,
     filter,
@@ -231,6 +242,7 @@ router.get('/geraete', async (req, res) => {
     seitenAnzahl,
     seitenAdresse,
     csvAdresse: '/geraete.csv?' + filterAlsAdresse(filter),
+    garantieBaldAnzahl: garantie.anzahl,
     ...(await auswahllisten()),
   });
 });
@@ -327,7 +339,15 @@ router.get('/geraete/:id', async (req, res) => {
      WHERE p.bereich = 'geraet' AND p.eintrag_id = $1 ORDER BY p.zeitpunkt DESC LIMIT 100`,
     [String(geraet.id)],
   );
-  res.render('geraete/detail', { geraet, belege, raumwechsel, protokoll });
+  // Ausleihe: wer das Gerät gerade hat (falls ausgeliehen) und die letzten Ausleihen
+  const ausleihen = await db.alle(
+    `SELECT id, ausgeliehen_an, bis, ausgeliehen_am, zurueck_am, bis < current_date AS ueberfaellig
+     FROM ausleihen WHERE geraet_id = $1 ORDER BY ausgeliehen_am DESC LIMIT 6`,
+    [geraet.id],
+  );
+  const ausleihe = ausleihen.find((eintrag) => !eintrag.zurueck_am);
+  const heute = new Date().toISOString().slice(0, 10);
+  res.render('geraete/detail', { geraet, belege, raumwechsel, protokoll, ausleihe, ausleihen, heute });
 });
 
 router.get('/geraete/:id/bearbeiten', nurMitRecht('geraete_bearbeiten'), async (req, res) => {

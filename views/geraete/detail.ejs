@@ -72,6 +72,46 @@
 </section>
 
 <section class="karte">
+  <h2>Ausleihe</h2>
+  <% if (ausleihe) { %>
+    <p class="<%= ausleihe.ueberfaellig ? 'warnung' : 'hinweis' %>">
+      Ausgeliehen an <strong><%= ausleihe.ausgeliehen_an %></strong> bis <%= datum(ausleihe.bis) %>
+      <%= ausleihe.ueberfaellig ? '– überfällig!' : '' %>
+    </p>
+    <% if (darf('ausleihe')) { %>
+      <form method="post" action="/ausleihen/<%= ausleihe.id %>/zurueck" data-bestaetigen="Ist das Gerät zurückgegeben?">
+        <button class="knopf">Zurückgegeben</button>
+      </form>
+    <% } %>
+  <% } else if (darf('ausleihe')) { %>
+    <form method="post" action="/geraete/<%= geraet.id %>/ausleihen" class="formular">
+      <label class="feld">
+        <span>Ausleihen an</span>
+        <input name="ausgeliehen_an" placeholder="Name der Lehrperson" maxlength="100">
+      </label>
+      <label class="feld">
+        <span>Zurück bis</span>
+        <input type="date" name="bis" min="<%= heute %>">
+      </label>
+      <div class="knoepfe ganze-breite">
+        <button class="knopf">Ausleihen</button>
+      </div>
+    </form>
+  <% } else { %>
+    <p class="leise">Nicht ausgeliehen.</p>
+  <% } %>
+  <% const frueher = ausleihen.filter((eintrag) => eintrag.zurueck_am); %>
+  <% if (frueher.length > 0) { %>
+    <p class="leise">
+      Zuletzt:
+      <% for (const eintrag of frueher) { %>
+        <br><%= eintrag.ausgeliehen_an %>, <%= datum(eintrag.ausgeliehen_am) %> bis <%= datum(eintrag.zurueck_am) %>
+      <% } %>
+    </p>
+  <% } %>
+</section>
+
+<section class="karte">
   <h2>Raumwechsel</h2>
   <% if (raumwechsel.length === 0) { %>
     <p class="leise">Bisher kein Raumwechsel.</p>

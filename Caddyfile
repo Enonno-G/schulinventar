@@ -1,0 +1,14 @@
+# HTTPS vor der App – Pflichtenheft Kap. 5 „Verschlüsselte Verbindung (HTTPS)“
+#
+# Caddy nimmt die Anfragen aus dem Browser verschlüsselt an und reicht sie an die App weiter.
+# Gestartet wird Caddy nur mit: docker compose --profile https up -d
+#
+# DOMAIN steht in .env:
+#   - Eine Adresse aus dem Internet (z. B. inventar.hakspittal.at): Caddy holt das Zertifikat automatisch.
+#   - Nur im Schulnetz (z. B. inventar.schule.local oder eine IP-Adresse): Dann die Zeile „tls internal“
+#     aktivieren. Der Browser zeigt beim ersten Aufruf eine Warnung, die Verbindung ist trotzdem verschlüsselt.
+
+{$DOMAIN} {
+	# tls internal
+	reverse_proxy app:3000
+}

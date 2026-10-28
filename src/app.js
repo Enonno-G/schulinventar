@@ -13,12 +13,15 @@ import { einstellungen } from './einstellungen.js';
 import { fehlerBehandeln, nichtGefunden } from './fehler.js';
 import { BEZEICHNUNGEN, dateigroesse, datum, datumZeit, FELDNAMEN, raumName, wertAnzeigen } from './format.js';
 import anmeldenSeiten from './seiten/anmelden.js';
+import ausleihenSeiten from './seiten/ausleihen.js';
 import belegeSeiten from './seiten/belege.js';
 import benutzerSeiten from './seiten/benutzer.js';
 import exportSeiten from './seiten/export.js';
-import geplanteSeiten from './seiten/geplant.js';
 import geraeteSeiten from './seiten/geraete.js';
+import importSeiten from './seiten/import.js';
+import inventurSeiten from './seiten/inventur.js';
 import raeumeSeiten from './seiten/raeume.js';
+import sollIstSeiten from './seiten/soll-ist.js';
 
 const PROJEKTORDNER = path.join(import.meta.dirname, '..');
 
@@ -108,9 +111,12 @@ export function appErstellen() {
   app.use(geraeteSeiten);
   app.use(raeumeSeiten);
   app.use(belegeSeiten);
+  app.use(ausleihenSeiten);
+  app.use(inventurSeiten);
+  app.use(sollIstSeiten);
+  app.use(importSeiten);
   app.use(exportSeiten);
   app.use(benutzerSeiten);
-  app.use(geplanteSeiten);
 
   // Keine Adresse hat gepasst
   app.use((req, res) => nichtGefunden(res));
