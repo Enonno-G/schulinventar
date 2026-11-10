@@ -81,6 +81,14 @@ test('CSV lesen: Trennzeichen erkennen, Anführungszeichen, Zeilenumbruch im Fel
   ]);
 });
 
+test('CSV lesen: Zoll-Zeichen mitten im Feld verschluckt keine Zeilen', () => {
+  assert.deepEqual(csvLesen('Anlage;Text;Raum\n1001;Monitor 24" Dell;E.01\n1002;PC;E.02\n'), [
+    ['Anlage', 'Text', 'Raum'],
+    ['1001', 'Monitor 24" Dell', 'E.01'],
+    ['1002', 'PC', 'E.02'],
+  ]);
+});
+
 test('CSV aus alten Windows-Programmen: Umlaute kommen richtig an', () => {
   const ansi = Buffer.from([0x52, 0x61, 0x75, 0x6d, 0x3b, 0xdc, 0x62, 0x75, 0x6e, 0x67]); // „Raum;Übung“ in Windows-1252
   assert.equal(textAusDatei(ansi), 'Raum;Übung');
@@ -142,4 +150,10 @@ test('SAP-Liste: doppelte Inventarnummer und falsche Dateien werden gemeldet', a
   assert.match((await listeLesen(exe)).fehler, /keine echte Excel-Datei/);
   const alt = { originalname: 'liste.xls', buffer: Buffer.from('x'), size: 1 };
   assert.match((await listeLesen(alt)).fehler, /\.xls geht nicht/);
+});
+
+test('SAP-Liste: Zeilenumbruch und doppelte Leerzeichen in Spaltenüberschriften werden aufgeräumt', async () => {
+  const buffer = Buffer.from('"Inventar-\nnummer";Anlagen  text;Raum\n1001;PC;E.01\n');
+  const liste = await listeLesen({ originalname: 'liste.csv', buffer, size: buffer.length });
+  assert.deepEqual(liste.spalten, ['Inventar- nummer', 'Anlagen text', 'Raum']);
 });

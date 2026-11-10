@@ -469,6 +469,25 @@ describe('Schulinventar', { skip: !TEST_DATENBANK && 'TEST_DATABASE_URL ist nich
     assert.equal((await aufrufen('facility', 'GET', `/import/${importId}`)).status, 403);
   });
 
+  test('SAP-Import: Spaltenüberschrift mit Zeilenumbruch lässt sich zuordnen', async () => {
+    // In Excel ist das eine Überschrift mit Alt+Enter, in einer CSV-Datei steht sie in Anführungszeichen
+    const liste = ['"Inventar-\nnummer";Text;Raum', `IMP-${kennung}-UMBRUCH;Beamer;${raumNr(0)}`];
+    const hochgeladen = await aufrufen('rechnungswesen', 'POST', '/import', listenFormular(liste));
+    const id = Number(hochgeladen.weiterleitung.split('/').pop());
+    const vorschau = await aufrufen('rechnungswesen', 'GET', `/import/${id}`);
+    assert.ok(vorschau.html.includes('<option value="Inventar- nummer"'), 'Überschrift ohne Zeilenumbruch');
+
+    // So schickt der Browser die Auswahl zurück
+    await aufrufen('rechnungswesen', 'POST', `/import/${id}/zuordnung`, {
+      inventarnummer: 'Inventar- nummer',
+      bezeichnung: 'Text',
+      raumnummer: 'Raum',
+    });
+    const nachher = await aufrufen('rechnungswesen', 'GET', `/import/${id}`);
+    assert.match(nachher.html, /<strong>1<\/strong> neu/);
+    await aufrufen('rechnungswesen', 'POST', `/import/${id}/abbrechen`);
+  });
+
   let inventurId;
 
   test('T5: Inventur eines Raumes – ein Gerät fehlt, ein fremdes Gerät ist vorhanden', async () => {

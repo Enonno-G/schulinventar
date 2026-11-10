@@ -16,7 +16,9 @@
       <select name="<%= feld %>">
         <option value="">– nicht in der Liste –</option>
         <% for (const spalte of importDaten.spalten) { %>
-          <option <%= importDaten.zuordnung[feld] === spalte ? 'selected' : '' %>><%= spalte %></option>
+          <%# value = genau dieser Text kommt beim Absenden zurück (ohne value nimmt der Browser den angezeigten
+              Text und fasst dabei Leerzeichen zusammen) %>
+          <option value="<%= spalte %>" <%= importDaten.zuordnung[feld] === spalte ? 'selected' : '' %>><%= spalte %></option>
         <% } %>
       </select>
     </label>

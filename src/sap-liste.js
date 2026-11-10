@@ -101,10 +101,12 @@ export async function listeLesen(datei) {
   const kopf = alleZeilen.find((zeile) => zeile.werte.filter((wert) => wert !== '').length >= 2);
   if (!kopf) return { fehler: 'In der Datei wurde keine Tabelle mit Spaltenüberschriften gefunden.' };
 
-  // Spaltenüberschriften: leere bekommen einen Namen, doppelte eine Nummer, damit jede eindeutig ist
+  // Spaltenüberschriften: leere bekommen einen Namen, doppelte eine Nummer, damit jede eindeutig ist.
+  // Zeilenumbrüche (in Excel Alt+Enter) und mehrere Leerzeichen werden zu einem Leerzeichen. Sonst schickt der
+  // Browser die Überschrift bei der Spaltenzuordnung etwas anders zurück und die Spalte passt nicht mehr.
   const spalten = [];
   kopf.werte.forEach((titel, index) => {
-    let name = titel || `Spalte ${index + 1}`;
+    let name = titel.replace(/\s+/g, ' ') || `Spalte ${index + 1}`;
     if (spalten.includes(name)) name = `${name} (${index + 1})`;
     spalten.push(name);
   });

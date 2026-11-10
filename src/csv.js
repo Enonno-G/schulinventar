@@ -63,7 +63,8 @@ export function csvLesen(text) {
   const trennzeichen = kandidaten.reduce((bestes, zeichen) => (anzahl(zeichen) > anzahl(bestes) ? zeichen : bestes));
 
   // Zeichen für Zeichen durchgehen. Innerhalb von "…" zählen Trennzeichen und Zeilenumbrüche nicht,
-  // "" steht dort für ein einzelnes Anführungszeichen.
+  // "" steht dort für ein einzelnes Anführungszeichen. Ein " mitten im Feld, z. B. das Zoll-Zeichen
+  // in Monitor 24", ist ein ganz normales Zeichen.
   const zeilen = [];
   let zeile = [];
   let wert = '';
@@ -79,8 +80,8 @@ export function csvLesen(text) {
       } else {
         wert += zeichen;
       }
-    } else if (zeichen === '"') {
-      inAnfuehrung = true;
+    } else if (zeichen === '"' && wert === '') {
+      inAnfuehrung = true; // nur am Anfang eines Feldes beginnt ein Text in Anführungszeichen
     } else if (zeichen === trennzeichen) {
       zeile.push(wert);
       wert = '';
