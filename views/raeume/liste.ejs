@@ -2,9 +2,12 @@
 
 <div class="seitenkopf">
   <h1>Räume</h1>
-  <% if (darf('raeume_bearbeiten')) { %>
-    <a class="knopf haupt" href="/raeume/neu">Raum anlegen</a>
-  <% } %>
+  <div class="knoepfe">
+    <a class="knopf" href="/raeume.csv">Als CSV herunterladen</a>
+    <% if (darf('raeume_bearbeiten')) { %>
+      <a class="knopf haupt" href="/raeume/neu">Raum anlegen</a>
+    <% } %>
+  </div>
 </div>
 
 <div class="tabelle">

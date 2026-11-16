@@ -1,0 +1,62 @@
+<%- include('../teile/kopf', { titel: 'Belege' }) %>
+
+<div class="seitenkopf">
+  <h1>Belege</h1>
+  <% if (darf('belege_hochladen')) { %>
+    <a class="knopf haupt" href="/belege/neu">Beleg hochladen</a>
+  <% } %>
+</div>
+
+<form method="get" action="/belege" class="karte filter">
+  <label class="feld breit">
+    <span>Suche</span>
+    <input type="search" name="suche" value="<%= filter.suche %>" placeholder="Dateiname oder Inventarnummer eines Geräts">
+  </label>
+  <label class="feld">
+    <span>Art</span>
+    <select name="art">
+      <option value="">Alle Arten</option>
+      <% for (const art of BELEGARTEN) { %>
+        <option value="<%= art %>" <%= filter.art === art ? 'selected' : '' %>><%= BEZEICHNUNGEN[art] %></option>
+      <% } %>
+    </select>
+  </label>
+  <div class="knoepfe">
+    <a class="knopf" href="/belege">Zurücksetzen</a>
+    <button class="knopf haupt">Suchen</button>
+  </div>
+</form>
+
+<% if (belege.length === 100) { %>
+  <p class="leise">Es werden die neuesten 100 Belege angezeigt. Mit der Suche finden Sie ältere.</p>
+<% } %>
+
+<div class="tabelle">
+  <table>
+    <thead>
+      <tr>
+        <th>Art</th>
+        <th>Datei</th>
+        <th>Belegdatum</th>
+        <th class="zahl">Geräte</th>
+        <th>Hochgeladen am</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (const beleg of belege) { %>
+        <tr>
+          <td><%= BEZEICHNUNGEN[beleg.art] %></td>
+          <td><a href="/belege/<%= beleg.id %>"><%= beleg.dateiname %></a></td>
+          <td><%= datum(beleg.belegdatum) %></td>
+          <td class="zahl"><%= beleg.anzahl_geraete %></td>
+          <td><%= datumZeit(beleg.hochgeladen_am) %></td>
+        </tr>
+      <% } %>
+      <% if (belege.length === 0) { %>
+        <tr><td colspan="5" class="leer">Keine Belege gefunden.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<%- include('../teile/fuss') %>

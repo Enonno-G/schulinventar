@@ -1,0 +1,62 @@
+<%- include('teile/kopf', { titel: 'Ausleihe' }) %>
+
+<h1>Ausleihe</h1>
+<p class="leise">
+  Ein Gerät leihen Sie in seiner Detailansicht aus (Gerät über die <a href="/geraete">Geräteliste</a> suchen).
+</p>
+
+<h2>Ausgeliehen (<%= ausgeliehen.length %>)</h2>
+<div class="tabelle">
+  <table>
+    <thead>
+      <tr>
+        <th>Inventarnummer</th><th>Bezeichnung</th><th>Ausgeliehen an</th><th>Seit</th><th>Zurück bis</th>
+        <% if (darf('ausleihe')) { %><th></th><% } %>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (const eintrag of ausgeliehen) { %>
+        <tr class="<%= eintrag.ueberfaellig ? 'ueberfaellig' : '' %>">
+          <td><a href="/geraete/<%= eintrag.geraet_id %>"><%= eintrag.inventarnummer %></a></td>
+          <td><%= eintrag.bezeichnung %></td>
+          <td><%= eintrag.ausgeliehen_an %></td>
+          <td><%= datum(eintrag.ausgeliehen_am) %></td>
+          <td><%= datum(eintrag.bis) %><%= eintrag.ueberfaellig ? ' – überfällig' : '' %></td>
+          <% if (darf('ausleihe')) { %>
+            <td class="aktionen">
+              <form method="post" action="/ausleihen/<%= eintrag.id %>/zurueck" data-bestaetigen="Ist <%= eintrag.inventarnummer %> zurückgegeben?">
+                <input type="hidden" name="zurueck" value="liste">
+                <button class="knopf">Zurückgegeben</button>
+              </form>
+            </td>
+          <% } %>
+        </tr>
+      <% } %>
+      <% if (ausgeliehen.length === 0) { %>
+        <tr><td colspan="6" class="leer">Zurzeit ist kein Gerät ausgeliehen.</td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<% if (zurueck.length > 0) { %>
+  <h2>Zuletzt zurückgegeben</h2>
+  <div class="tabelle">
+    <table>
+      <thead><tr><th>Inventarnummer</th><th>Bezeichnung</th><th>Ausgeliehen an</th><th>Von</th><th>Zurück am</th></tr></thead>
+      <tbody>
+        <% for (const eintrag of zurueck) { %>
+          <tr>
+            <td><a href="/geraete/<%= eintrag.geraet_id %>"><%= eintrag.inventarnummer %></a></td>
+            <td><%= eintrag.bezeichnung %></td>
+            <td><%= eintrag.ausgeliehen_an %></td>
+            <td><%= datum(eintrag.ausgeliehen_am) %></td>
+            <td><%= datum(eintrag.zurueck_am) %></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
+
+<%- include('teile/fuss') %>

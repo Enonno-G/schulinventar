@@ -1,5 +1,6 @@
 // Einstellungen aus der Datei .env (beim Entwickeln) bzw. aus docker-compose.yml (im Betrieb).
 // Was die einzelnen Werte bedeuten, steht in .env.example.
+import path from 'node:path';
 
 const imBetrieb = process.env.NODE_ENV === 'production';
 
@@ -16,6 +17,10 @@ export const einstellungen = {
     email: process.env.ADMIN_EMAIL,
     passwort: process.env.ADMIN_PASSWORD,
   },
+  // Hochgeladene Belege: wo sie liegen, wie groß sie sein dürfen und wie lange sie aufbewahrt werden müssen
+  uploadOrdner: path.resolve(process.env.UPLOAD_DIR || path.join(import.meta.dirname, '..', 'uploads')),
+  uploadHoechstMB: Number(process.env.UPLOAD_MAX_MB || 10),
+  aufbewahrungJahre: Number(process.env.AUFBEWAHRUNG_JAHRE || 7),
 };
 
 if (!einstellungen.datenbankAdresse) {

@@ -1,0 +1,107 @@
+<%- include('teile/kopf', { titel: 'Soll-Ist-Vergleich' }) %>
+
+<h1>Soll-Ist-Vergleich</h1>
+
+<% if (!inventur) { %>
+  <p class="karte">
+    Es gibt noch keine Inventur.
+    <% if (darf('inventur')) { %><a href="/inventur">Inventur starten</a><% } %>
+  </p>
+<% } else { %>
+  <form method="get" action="/soll-ist" class="karte filter">
+    <label class="feld">
+      <span>Inventur</span>
+      <select name="inventur">
+        <% for (const eintrag of inventuren) { %>
+          <option value="<%= eintrag.id %>" <%= eintrag.id === inventur.id ? 'selected' : '' %>><%= eintrag.name %> (<%= datum(eintrag.begonnen_am) %>)</option>
+        <% } %>
+      </select>
+    </label>
+    <div class="knoepfe">
+      <button class="knopf">Anzeigen</button>
+      <a class="knopf" href="/soll-ist.csv?inventur=<%= inventur.id %>">Als CSV herunterladen</a>
+    </div>
+  </form>
+
+  <p class="leise">
+    <%= inventur.abgeschlossen_am ? 'Abgeschlossen am ' + datumZeit(inventur.abgeschlossen_am) : 'Diese Inventur läuft noch.' %>
+    Soll = Raum laut SAP. Ist = Raum, in dem das Gerät bei der Inventur gefunden wurde.
+  </p>
+
+  <div class="zahlen">
+    <div class="zahl-kasten <%= fehlt.length > 0 ? 'auffaellig' : '' %>"><strong><%= fehlt.length %></strong> fehlen</div>
+    <div class="zahl-kasten <%= andererRaum.length > 0 ? 'auffaellig' : '' %>"><strong><%= andererRaum.length %></strong> in anderem Raum</div>
+    <div class="zahl-kasten <%= nichtInSap.length > 0 ? 'auffaellig' : '' %>"><strong><%= nichtInSap.length %></strong> nicht in SAP</div>
+  </div>
+
+  <% if (raeumeOhneErfassung.length > 0) { %>
+    <p class="hinweis">
+      In diesen Räumen wurde noch nichts erfasst, ihre Geräte zählen deshalb noch nicht als fehlend:
+      <%= raeumeOhneErfassung.join(', ') %>
+    </p>
+  <% } %>
+
+  <section class="karte">
+    <h2>Fehlen (<%= fehlt.length %>)</h2>
+    <div class="tabelle">
+      <table>
+        <thead><tr><th>Inventarnummer</th><th>Bezeichnung</th><th>Raum laut SAP</th></tr></thead>
+        <tbody>
+          <% for (const zeile of fehlt) { %>
+            <tr>
+              <td><a href="/geraete/<%= zeile.id %>"><%= zeile.inventarnummer %></a></td>
+              <td><%= zeile.bezeichnung %></td>
+              <td><%= zeile.soll_raum %></td>
+            </tr>
+          <% } %>
+          <% if (fehlt.length === 0) { %><tr><td colspan="3" class="leer">Kein Gerät fehlt.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="karte">
+    <h2>In einem anderen Raum gefunden (<%= andererRaum.length %>)</h2>
+    <div class="tabelle">
+      <table>
+        <thead><tr><th>Inventarnummer</th><th>Bezeichnung</th><th>Raum laut SAP</th><th>Gefunden in</th></tr></thead>
+        <tbody>
+          <% for (const zeile of andererRaum) { %>
+            <tr>
+              <td><a href="/geraete/<%= zeile.geraet_id %>"><%= zeile.inventarnummer %></a></td>
+              <td><%= zeile.bezeichnung %></td>
+              <td><%= zeile.soll_raum %></td>
+              <td><%= zeile.ist_raum %></td>
+            </tr>
+          <% } %>
+          <% if (andererRaum.length === 0) { %><tr><td colspan="4" class="leer">Keine Abweichung.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="karte">
+    <h2>Nicht in SAP (<%= nichtInSap.length %>)</h2>
+    <div class="tabelle">
+      <table>
+        <thead><tr><th>Inventarnummer</th><th>Bezeichnung</th><th>Gefunden in</th><th>Grund</th></tr></thead>
+        <tbody>
+          <% for (const zeile of nichtInSap) { %>
+            <tr>
+              <td>
+                <% if (zeile.geraet_id) { %><a href="/geraete/<%= zeile.geraet_id %>"><%= zeile.inventarnummer %></a>
+                <% } else { %><%= zeile.inventarnummer %><% } %>
+              </td>
+              <td><%= zeile.bezeichnung ?? '–' %></td>
+              <td><%= zeile.ist_raum ?? '–' %></td>
+              <td><%= zeile.geraet_id ? 'nur bei uns angelegt' : 'Inventarnummer unbekannt' %></td>
+            </tr>
+          <% } %>
+          <% if (nichtInSap.length === 0) { %><tr><td colspan="4" class="leer">Keine Abweichung.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% } %>
+
+<%- include('teile/fuss') %>

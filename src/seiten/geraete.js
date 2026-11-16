@@ -2,11 +2,13 @@
 // „Raumverwaltung“ (Raumwechsel mit Datum) und „Verarbeitung dieser Daten“ (Eingaben prüfen)
 //
 //   GET  /geraete                   Liste mit Suche und Filtern
+//   GET  /geraete.csv               dieselbe Liste als CSV-Datei für Excel (Pflichtenheft Kap. 4 „Export in CSV“)
 //   GET  /geraete/neu               Formular „Neues Gerät“       POST /geraete/neu               speichern
 //   GET  /geraete/:id               alles zu einem Gerät
 //   GET  /geraete/:id/bearbeiten    Formular „Gerät bearbeiten“  POST /geraete/:id/bearbeiten    speichern
 import { Router } from 'express';
 import { GERAETEFELDER_JE_ROLLE, nurMitRecht } from '../anmeldung.js';
+import { csvSenden } from '../csv.js';
 import { db } from '../datenbank.js';
 import { nichtGefunden } from '../fehler.js';
 import { protokollieren } from '../protokoll.js';
@@ -27,10 +29,45 @@ const FELDER = [
   'kaufdatum',
   'inbetriebnahme',
   'garantie_bis',
+  'lieferant',
   'anmerkungen',
 ];
 const DATUMSFELDER = ['anschaffungsdatum', 'kaufdatum', 'inbetriebnahme', 'garantie_bis'];
-const HOECHSTLAENGE = { inventarnummer: 50, bezeichnung: 200, typ: 100, seriennummer: 100, anmerkungen: 2000 };
+const HOECHSTLAENGE = {
+  inventarnummer: 50,
+  bezeichnung: 200,
+  typ: 100,
+  seriennummer: 100,
+  lieferant: 200,
+  anmerkungen: 2000,
+};
+
+// Spalten der CSV-Datei
+const CSV_SPALTEN = [
+  { titel: 'Inventarnummer', feld: 'inventarnummer' },
+  { titel: 'Bezeichnung', feld: 'bezeichnung' },
+  { titel: 'Gerätetyp', feld: 'typ' },
+  { titel: 'Seriennummer', feld: 'seriennummer' },
+  { titel: 'Raum', feld: 'raumnummer' },
+  { titel: 'Raumbezeichnung', feld: 'raumbezeichnung' },
+  { titel: 'Anschaffungsdatum', feld: 'anschaffungsdatum', datum: true },
+  { titel: 'Kaufdatum', feld: 'kaufdatum', datum: true },
+  { titel: 'Inbetriebnahme', feld: 'inbetriebnahme', datum: true },
+  { titel: 'Garantie bis', feld: 'garantie_bis', datum: true },
+  { titel: 'Lieferant', feld: 'lieferant' },
+  { titel: 'Anmerkungen', feld: 'anmerkungen' },
+  { titel: 'Raum laut SAP', feld: 'sap_raumnummer' },
+  { titel: 'Letzte Inventur', feld: 'letzte_inventur', datum: true },
+];
+
+// Den Lieferanten über den Namen finden oder neu anlegen. Ergebnis: seine id (oder null, wenn kein Name).
+async function lieferantId(t, name) {
+  if (!name) return null;
+  const vorhanden = await t.eine('SELECT id FROM lieferanten WHERE lower(name) = lower($1)', [name]);
+  if (vorhanden) return vorhanden.id;
+  const neu = await t.eine('INSERT INTO lieferanten (name) VALUES ($1) RETURNING id', [name]);
+  return neu.id;
+}
 
 // Liest die Felder aus dem Formular und prüft sie.
 // Ergebnis: das Gerät und die Fehlermeldungen je Feld (leer, wenn alles passt).
@@ -106,19 +143,35 @@ function fuersProtokoll(geraet) {
 async function auswahllisten() {
   const raeume = await db.alle('SELECT id, nummer, bezeichnung FROM raeume ORDER BY nummer');
   const typen = await db.alle('SELECT DISTINCT typ FROM geraete WHERE typ IS NOT NULL ORDER BY typ');
-  return { raeume, typen: typen.map((zeile) => zeile.typ) };
+  const lieferanten = await db.alle('SELECT name FROM lieferanten ORDER BY name');
+  return { raeume, typen: typen.map((zeile) => zeile.typ), lieferanten: lieferanten.map((zeile) => zeile.name) };
 }
 
-router.get('/geraete', async (req, res) => {
-  // Die Filter stehen in der Adresse, z. B. /geraete?suche=beamer&raum=3&seite=2
-  const filter = {
-    suche: text(req.query.suche),
-    raum: nummer(req.query.raum),
-    typ: text(req.query.typ),
-    garantieBis: istDatum(req.query.garantie_bis) ? req.query.garantie_bis : null,
-    seite: nummer(req.query.seite) ?? 1,
+// Die Filter stehen in der Adresse, z. B. /geraete?suche=beamer&raum=3&seite=2
+function filterLesen(adresse) {
+  return {
+    suche: text(adresse.suche),
+    raum: nummer(adresse.raum),
+    typ: text(adresse.typ),
+    garantieBis: istDatum(adresse.garantie_bis) ? adresse.garantie_bis : null,
+    garantieBald: adresse.garantie === 'bald', // Garantie endet in den nächsten 30 Tagen
+    seite: nummer(adresse.seite) ?? 1,
   };
+}
 
+// Dieselben Filter als Adresse, z. B. für „Weiter“ oder den CSV-Export: 'suche=beamer&raum=3'
+function filterAlsAdresse(filter) {
+  const parameter = new URLSearchParams();
+  if (filter.suche) parameter.set('suche', filter.suche);
+  if (filter.raum) parameter.set('raum', filter.raum);
+  if (filter.typ) parameter.set('typ', filter.typ);
+  if (filter.garantieBis) parameter.set('garantie_bis', filter.garantieBis);
+  if (filter.garantieBald) parameter.set('garantie', 'bald');
+  return parameter.toString();
+}
+
+// Baut aus den Filtern den WHERE-Teil der Abfrage und die Werte für die Platzhalter
+function filterBedingungen(filter) {
   // Bedingungen für die Abfrage sammeln. Jeder Wert bekommt einen Platzhalter $1, $2, …
   const bedingungen = [];
   const werte = [];
@@ -141,8 +194,18 @@ router.get('/geraete', async (req, res) => {
     werte.push(filter.garantieBis);
     bedingungen.push('g.garantie_bis <= $' + werte.length);
   }
+  if (filter.garantieBald) {
+    // Pflichtenheft Kap. 4 „Erinnerung bei ablaufender Garantie“: Garantie endet zwischen heute und in 30 Tagen
+    bedingungen.push('g.garantie_bis BETWEEN current_date AND current_date + 30');
+  }
   let where = '';
   if (bedingungen.length > 0) where = 'WHERE ' + bedingungen.join(' AND ');
+  return { where, werte };
+}
+
+router.get('/geraete', async (req, res) => {
+  const filter = filterLesen(req.query);
+  const { where, werte } = filterBedingungen(filter);
 
   // Wie viele Geräte passen insgesamt? Daraus ergibt sich die Anzahl der Seiten.
   const zaehlung = await db.eine(`SELECT count(*) AS anzahl FROM geraete g ${where}`, werte);
@@ -161,14 +224,15 @@ router.get('/geraete', async (req, res) => {
 
   // Adresse für „Zurück“ und „Weiter“: dieselben Filter, andere Seite
   function seitenAdresse(neueSeite) {
-    const parameter = new URLSearchParams();
-    if (filter.suche) parameter.set('suche', filter.suche);
-    if (filter.raum) parameter.set('raum', filter.raum);
-    if (filter.typ) parameter.set('typ', filter.typ);
-    if (filter.garantieBis) parameter.set('garantie_bis', filter.garantieBis);
+    const parameter = new URLSearchParams(filterAlsAdresse(filter));
     parameter.set('seite', neueSeite);
     return '/geraete?' + parameter.toString();
   }
+
+  // Erinnerung oben auf der Seite: Bei wie vielen Geräten endet die Garantie in den nächsten 30 Tagen?
+  const garantie = await db.eine(
+    'SELECT count(*) AS anzahl FROM geraete WHERE garantie_bis BETWEEN current_date AND current_date + 30',
+  );
 
   res.render('geraete/liste', {
     geraete,
@@ -177,8 +241,26 @@ router.get('/geraete', async (req, res) => {
     seite,
     seitenAnzahl,
     seitenAdresse,
+    csvAdresse: '/geraete.csv?' + filterAlsAdresse(filter),
+    garantieBaldAnzahl: garantie.anzahl,
     ...(await auswahllisten()),
   });
+});
+
+// Dieselbe Liste als CSV-Datei: dieselben Filter, aber alle passenden Geräte auf einmal (keine Seiten)
+router.get('/geraete.csv', async (req, res) => {
+  const { where, werte } = filterBedingungen(filterLesen(req.query));
+  const geraete = await db.alle(
+    `SELECT g.*, r.nummer AS raumnummer, r.bezeichnung AS raumbezeichnung, l.name AS lieferant
+     FROM geraete g
+     JOIN raeume r ON r.id = g.raum_id
+     LEFT JOIN lieferanten l ON l.id = g.lieferant_id
+     ${where}
+     ORDER BY g.inventarnummer`,
+    werte,
+  );
+  const heute = new Date().toISOString().slice(0, 10);
+  csvSenden(res, `geraete-${heute}.csv`, CSV_SPALTEN, geraete);
 });
 
 router.get('/geraete/neu', nurMitRecht('geraete_anlegen'), async (req, res) => {
@@ -204,9 +286,9 @@ router.post('/geraete/neu', nurMitRecht('geraete_anlegen'), async (req, res) => 
   // Gerät speichern und ins Änderungsprotokoll schreiben: beides oder nichts
   const neuesGeraet = await db.transaktion(async (t) => {
     const gespeichert = await t.eine(
-      `INSERT INTO geraete (inventarnummer, bezeichnung, typ, seriennummer, raum_id,
-                            anschaffungsdatum, kaufdatum, inbetriebnahme, garantie_bis, anmerkungen, herkunft)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'manuell')
+      `INSERT INTO geraete (inventarnummer, bezeichnung, typ, seriennummer, raum_id, anschaffungsdatum,
+                            kaufdatum, inbetriebnahme, garantie_bis, lieferant_id, anmerkungen, herkunft)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'manuell')
        RETURNING id`,
       [
         geraet.inventarnummer,
@@ -218,6 +300,7 @@ router.post('/geraete/neu', nurMitRecht('geraete_anlegen'), async (req, res) => 
         geraet.kaufdatum,
         geraet.inbetriebnahme,
         geraet.garantie_bis,
+        await lieferantId(t, geraet.lieferant),
         geraet.anmerkungen,
       ],
     );
@@ -239,9 +322,9 @@ router.get('/geraete/:id', async (req, res) => {
   if (!geraet) return nichtGefunden(res, 'Gerät');
 
   const belege = await db.alle(
-    `SELECT b.id, b.art, b.dateiname, b.belegdatum
+    `SELECT b.id, b.art, b.dateiname, b.belegdatum, b.dateityp, b.groesse_bytes
      FROM geraet_belege gb JOIN belege b ON b.id = gb.beleg_id
-     WHERE gb.geraet_id = $1 ORDER BY b.hochgeladen_am DESC`,
+     WHERE gb.geraet_id = $1 ORDER BY b.belegdatum DESC NULLS LAST, b.hochgeladen_am DESC`,
     [geraet.id],
   );
   const raumwechsel = await db.alle(
@@ -256,7 +339,15 @@ router.get('/geraete/:id', async (req, res) => {
      WHERE p.bereich = 'geraet' AND p.eintrag_id = $1 ORDER BY p.zeitpunkt DESC LIMIT 100`,
     [String(geraet.id)],
   );
-  res.render('geraete/detail', { geraet, belege, raumwechsel, protokoll });
+  // Ausleihe: wer das Gerät gerade hat (falls ausgeliehen) und die letzten Ausleihen
+  const ausleihen = await db.alle(
+    `SELECT id, ausgeliehen_an, bis, ausgeliehen_am, zurueck_am, bis < current_date AS ueberfaellig
+     FROM ausleihen WHERE geraet_id = $1 ORDER BY ausgeliehen_am DESC LIMIT 6`,
+    [geraet.id],
+  );
+  const ausleihe = ausleihen.find((eintrag) => !eintrag.zurueck_am);
+  const heute = new Date().toISOString().slice(0, 10);
+  res.render('geraete/detail', { geraet, belege, raumwechsel, protokoll, ausleihe, ausleihen, heute });
 });
 
 router.get('/geraete/:id/bearbeiten', nurMitRecht('geraete_bearbeiten'), async (req, res) => {
@@ -293,8 +384,9 @@ router.post('/geraete/:id/bearbeiten', nurMitRecht('geraete_bearbeiten'), async 
   await db.transaktion(async (t) => {
     await t.ausfuehren(
       `UPDATE geraete SET inventarnummer = $1, bezeichnung = $2, typ = $3, seriennummer = $4, raum_id = $5,
-              anschaffungsdatum = $6, kaufdatum = $7, inbetriebnahme = $8, garantie_bis = $9, anmerkungen = $10
-       WHERE id = $11`,
+              anschaffungsdatum = $6, kaufdatum = $7, inbetriebnahme = $8, garantie_bis = $9, lieferant_id = $10,
+              anmerkungen = $11
+       WHERE id = $12`,
       [
         geraet.inventarnummer,
         geraet.bezeichnung,
@@ -305,6 +397,7 @@ router.post('/geraete/:id/bearbeiten', nurMitRecht('geraete_bearbeiten'), async 
         geraet.kaufdatum,
         geraet.inbetriebnahme,
         geraet.garantie_bis,
+        await lieferantId(t, geraet.lieferant),
         geraet.anmerkungen,
         vorher.id,
       ],

@@ -1,0 +1,24 @@
+<%- include('../teile/kopf', { titel: 'SAP-Import ' + importDaten.dateiname }) %>
+
+<p class="pfad"><a href="/import">SAP-Import</a> / <%= importDaten.dateiname %></p>
+<h1>Import: <%= importDaten.dateiname %></h1>
+
+<section class="karte">
+  <% if (importDaten.status === 'abgebrochen') { %>
+    <p>Dieser Import wurde abgebrochen. Es wurde nichts geändert.</p>
+  <% } else { %>
+    <p>Übernommen am <%= datumZeit(importDaten.uebernommen_am) %> von <%= importDaten.benutzer ?? '–' %>.</p>
+    <div class="zahlen">
+      <div class="zahl-kasten"><strong><%= importDaten.ergebnis.neu %></strong> neu</div>
+      <div class="zahl-kasten"><strong><%= importDaten.ergebnis.geaendert %></strong> geändert</div>
+      <div class="zahl-kasten"><strong><%= importDaten.ergebnis.unveraendert %></strong> unverändert</div>
+      <div class="zahl-kasten"><strong><%= importDaten.ergebnis.fehlerhaft %></strong> fehlerhaft (nicht übernommen)</div>
+    </div>
+    <% if (importDaten.ergebnis.neue_raeume.length > 0) { %>
+      <p>Neu angelegte Räume: <%= importDaten.ergebnis.neue_raeume.join(', ') %></p>
+    <% } %>
+  <% } %>
+  <p><a class="knopf" href="/import">Zurück zum SAP-Import</a></p>
+</section>
+
+<%- include('../teile/fuss') %>

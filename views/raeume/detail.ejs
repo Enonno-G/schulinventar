@@ -1,7 +1,13 @@
 <%- include('../teile/kopf', { titel: 'Raum ' + raum.nummer }) %>
 
 <p class="pfad"><a href="/raeume">Räume</a> / <%= raum.nummer %></p>
-<h1>Raum <%= raumName(raum.nummer, raum.bezeichnung) %></h1>
+<div class="seitenkopf">
+  <h1>Raum <%= raumName(raum.nummer, raum.bezeichnung) %></h1>
+  <% if (geraete.length > 0) { %>
+    <%# Dieselbe Liste wie in der Geräteliste mit dem Filter „Raum“ %>
+    <a class="knopf" href="/geraete.csv?raum=<%= raum.id %>">Als CSV herunterladen</a>
+  <% } %>
+</div>
 <p class="leise">
   <%= raum.stockwerk ?? 'Stockwerk nicht angegeben' %> ·
   <%= geraete.length %> <%= geraete.length === 1 ? 'Gerät' : 'Geräte' %>

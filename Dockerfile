@@ -14,7 +14,7 @@ COPY views views
 COPY public public
 COPY datenbank datenbank
 
-# Ordner für hochgeladene Belege (ab Sprint 4)
+# Ordner für hochgeladene Belege
 RUN mkdir -p /data/uploads && chown node:node /data/uploads
 
 USER node

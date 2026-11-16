@@ -10,27 +10,56 @@ Raum für Raum über die Inventarnummer auf dem Strichcode, danach zeigt ein Sol
 **Neu im Code?** Zuerst [docs/code-erklaert.md](docs/code-erklaert.md) lesen: wie man reinkommt, wie alles
 zusammenspielt und wie man etwas ändert.
 
+## Dokumente
+
+| Dokument                                          | Für wen                                                   |
+| ------------------------------------------------- | --------------------------------------------------------- |
+| [Benutzerhandbuch](docs/benutzerhandbuch.md)      | alle, die mit dem Programm arbeiten, nach Rollen geordnet |
+| [Installationsanleitung](docs/installation.md)    | wer das Programm auf dem Schulserver einrichtet           |
+| [Testprotokoll](docs/testprotokoll.md)            | Abnahme mit dem Auftraggeber (Testfälle T1–T8)            |
+| [Der Code einfach erklärt](docs/code-erklaert.md) | wer am Code arbeitet                                      |
+| [Datenmodell](docs/datenmodell.md)                | Aufbau der Datenbank                                      |
+
 ## Stand
 
-| Bereich                                              | Stand                          | Sprint |
-| ---------------------------------------------------- | ------------------------------ | ------ |
-| Grundgerüst, Docker, Datenbank für alle Bereiche     | erste Version                  | 1      |
-| Anmeldung, Rollen, automatische Abmeldung, Passwort  | erste Version                  | 2      |
-| Benutzerverwaltung, Raumverwaltung                   | erste Version                  | 2      |
-| Geräteliste mit Suche und Filtern, Detailansicht     | erste Version                  | 2–3    |
-| Gerät anlegen und bearbeiten, Raumwechsel, Protokoll | erste Version                  | 3      |
-| SAP-Import                                           | Platzhalter-Seite, Tabellen da | 3      |
-| Belege, Inventur, Soll-Ist-Vergleich, Export         | Platzhalter-Seite, Tabellen da | 4      |
-| Datensicherung, HTTPS im Echtbetrieb                 | offen                          | 4–5    |
+Umgesetzt sind alle Anforderungen aus dem Pflichtenheft (Version 1.1, Kap. 4 und 5). Was bei der Testphase mit echten
+Daten noch angepasst werden muss, steht unter [Offene Punkte](#offene-punkte).
 
-Was in den noch offenen Bereichen gebaut werden soll, steht oben in [src/seiten/geplant.js](src/seiten/geplant.js).
+| Pflichtenheft                                             | Umsetzung                                                 | Sprint |
+| --------------------------------------------------------- | --------------------------------------------------------- | ------ |
+| 4.1 Import aus SAP (CSV oder Excel)                       | Seite „SAP-Import“: Spaltenzuordnung, Vorschau, Übernahme | 3      |
+| 4.2 Formular für zusätzliche Eingaben                     | Geräteformular, Seite „Belege“                            | 1–2    |
+| 4.3 Verarbeitung (Prüfungen)                              | beim Import und bei jeder Eingabe                         | 1–3    |
+| 4.4 Speicherung in der DB, Änderungsprotokoll             | PostgreSQL, Tabelle `protokoll`                           | 1      |
+| 4.5 Anzeige in der Web-App (Liste, Filter, Raum, Detail)  | Seiten „Geräte“ und „Räume“                               | 1      |
+| 4.6 Export als CSV für Excel                              | „Als CSV herunterladen“ bei jeder Liste, Seite „Export“   | 2      |
+| 4.7 Export im Format für SAP                              | Seite „Export“, Abschnitt „Export für SAP“                | 4      |
+| 4.8 Raumverwaltung                                        | Seite „Räume“, Raumwechsel mit Datum                      | 1      |
+| 4.9 Soll-Ist-Vergleich                                    | Seite „Soll-Ist-Vergleich“                                | 4      |
+| 4.10 Benutzerverwaltung und Anmeldung                     | Seite „Benutzer“, vier Rollen                             | 1      |
+| 4.11 Inventur mit Strichcode (Eingabe der Inventarnummer) | Seite „Inventur“, auch mit Handscanner                    | 4      |
+| 4.12 KANN: Inventur mit Kamera-Scanner                    | Knopf „Mit Kamera scannen“ (Chrome auf Android)           | 4      |
+| 4.13 KANN: Erinnerung bei ablaufender Garantie            | Hinweis und Filter in der Geräteliste (ohne E-Mail)       | 4      |
+| 4.14 KANN: Ausleihe von Geräten                           | Seite „Ausleihe“, Ausleihen beim Gerät                    | 4      |
+| 5.4 Sicherheit, HTTPS, automatische Datensicherung        | Docker: Container `sicherung` und `https`                 | 4      |
+
+### Offene Punkte
+
+- **Format der SAP-Liste:** Sobald die anonymisierte SAP-Liste vom Auftraggeber da ist, beim Import die Spalten
+  zuordnen (wird gemerkt) und das Format des SAP-Exports oben in [src/seiten/export.js](src/seiten/export.js)
+  anpassen.
+- **Aufbewahrungsfrist** der Belege mit dem Auftraggeber klären (`AUFBEWAHRUNG_JAHRE`, derzeit 7 Jahre).
+- **Server oder Hosting** mit der Schule klären, dann nach [docs/installation.md](docs/installation.md) einrichten.
+- **Testphase und Abnahme** mit echten Daten im Jänner 2027, Ergebnisse in [docs/testprotokoll.md](docs/testprotokoll.md).
 
 ## Technik
 
 - **Node.js** mit **Express**: der Server, der die Seiten ausliefert
 - **EJS**: Seiten-Vorlagen, normales HTML mit Platzhaltern (Ordner `views/`)
 - **PostgreSQL**: die Datenbank, SQL steht direkt im Code
-- **Docker Compose**: startet Datenbank und App mit einem Befehl
+- **multer**: nimmt hochgeladene Dateien entgegen (Belege, SAP-Liste)
+- **read-excel-file**: liest Excel-Dateien (.xlsx) beim SAP-Import
+- **Docker Compose**: startet Datenbank, App, Datensicherung und (im Echtbetrieb) HTTPS mit **Caddy**
 
 ## Starten
 
@@ -45,7 +74,8 @@ Voraussetzung: [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 3. <http://localhost:3000> öffnen und mit `ADMIN_EMAIL` und `ADMIN_PASSWORD` aus `.env` anmelden.
 
-Beenden mit `docker compose down` (die Daten bleiben erhalten).
+Beenden mit `docker compose down` (die Daten bleiben erhalten). Für den Schulserver mit HTTPS und Datensicherung:
+[docs/installation.md](docs/installation.md).
 
 ## Entwickeln
 
@@ -95,19 +125,27 @@ Dann in `.env` die Zeile `TEST_DATABASE_URL` aktivieren (das `#` am Anfang entfe
 src/
   start.js          Programm starten
   app.js            welche Adresse wohin führt, Sicherheit, Sitzungen
-  seiten/           eine Datei je Bereich: Geräte, Räume, Benutzer, Anmelden, geplante Bereiche
+  seiten/           eine Datei je Bereich: Geräte, Räume, Belege, Ausleihe, Inventur, Soll-Ist,
+                    SAP-Import, Export, Benutzer, Anmelden
   anmeldung.js      Rollen und Rechte
   datenbank.js      Verbindung zur Datenbank
+  sap-liste.js      SAP-Liste (CSV oder Excel) lesen und Zeile für Zeile prüfen
+  dateien.js        hochgeladene Belege prüfen und speichern
+  csv.js            CSV-Dateien schreiben und lesen
   protokoll.js      Änderungsprotokoll
   pruefen.js        Eingaben prüfen
   format.js         Datum und Texte auf Deutsch
   passwort.js       Passwörter sicher speichern
   testdaten.js      Testdaten anlegen
 views/              Seiten-Vorlagen (HTML mit Platzhaltern), ein Ordner je Bereich
-public/             Aussehen (style.css), Logo, ein kleines Script
+public/             Aussehen (style.css), Logo, kleine Scripts (Bestätigen, Kamera-Scanner)
 datenbank/          Aufbau der Datenbank als SQL
-test/               automatische Tests
-docs/               Erklärung des Codes und Datenmodell
+sicherung/          Script für die tägliche Datensicherung
+test/               automatische Tests und eine Beispiel-Excel-Liste
+docs/               Handbuch, Installation, Testprotokoll, Erklärung des Codes, Datenmodell
+Caddyfile           Einstellungen für HTTPS
+uploads/            hochgeladene Belege beim Entwickeln (nicht auf GitHub, im Docker-Container: /data/uploads)
+sicherungen/        die Datensicherungen (nicht auf GitHub)
 ```
 
 ## Rollen und Rechte
@@ -123,6 +161,7 @@ Ansehen dürfen alle angemeldeten Benutzer. Geprüft wird immer am Server ([src/
 | Belege hochladen               |       ✓       |               ✓                |                          |             |
 | SAP-Import und -Export         |       ✓       |               ✓                |                          |             |
 | Inventur                       |       ✓       |                                |            ✓             |             |
+| Geräte ausleihen               |       ✓       |               ✓                |            ✓             |             |
 
 ## Sicherheit
 
@@ -130,9 +169,17 @@ Ansehen dürfen alle angemeldeten Benutzer. Geprüft wird immer am Server ([src/
 - Rechte werden am Server geprüft, nicht nur in der Oberfläche
 - Alle Datenbankabfragen mit Platzhaltern `$1, $2, …` (Schutz gegen SQL-Injection)
 - Alle Werte in den Vorlagen mit `<%= %>` ausgegeben, das maskiert HTML (Schutz gegen eingeschleuste Skripte)
+- Belege: nur PDF, JPG und PNG bis `UPLOAD_MAX_MB`, geprüft wird die Dateiendung und der Anfang des Inhalts. Gespeichert
+  wird unverändert unter einem zufälligen Namen, mit Prüfsumme. Löschen ist bis zum Ende der Aufbewahrungsfrist
+  (`AUFBEWAHRUNG_JAHRE`) gesperrt.
+- SAP-Import: nur `.csv`, `.txt` und `.xlsx`, ebenfalls am Inhalt geprüft. Geändert wird erst nach der Vorschau.
+- CSV-Export: Werte, die mit `=`, `+`, `-` oder `@` beginnen, bekommen ein `'` davor, damit Excel sie nicht als Formel
+  ausführt (nicht beim Export für SAP, dort müssen die Werte unverändert bleiben)
 - Automatische Abmeldung nach `SESSION_IDLE_MINUTES` ohne Aktivität, Sicherheits-Header mit Helmet
-- Echtbetrieb nur über HTTPS: einen Reverse Proxy (z. B. Caddy) vor den Container setzen und in `.env`
-  `COOKIE_SECURE=true` und `TRUST_PROXY=true` eintragen
+- Echtbetrieb nur über HTTPS (Container `https` mit Caddy) und mit täglicher Datensicherung (Container `sicherung`),
+  siehe [docs/installation.md](docs/installation.md)
+- Datenschutz: gespeichert werden nur Name, E-Mail-Adresse und Rolle der Benutzer, bei der Ausleihe zusätzlich, wer
+  ein Gerät bis wann hat
 
 ## Zusammenarbeit
 

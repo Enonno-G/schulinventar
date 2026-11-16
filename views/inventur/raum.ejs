@@ -1,0 +1,88 @@
+<%#
+  Erfassen in einem Raum. So einfach wie an der Supermarktkasse: Nummer eintippen oder scannen, Enter, fertig.
+  Ein Handscanner „tippt“ die Nummer und drückt danach Enter. Das Feld ist danach gleich wieder leer (autofocus).
+%>
+<%- include('../teile/kopf', { titel: 'Inventur Raum ' + raum.nummer }) %>
+
+<p class="pfad"><a href="/inventur"><%= inventur.name %></a> / Raum <%= raum.nummer %></p>
+
+<form method="get" action="/inventur/<%= inventur.id %>/raum" class="raumwahl">
+  <label class="feld">
+    <span>Raum</span>
+    <select name="raum">
+      <% for (const eintrag of raeume) { %>
+        <option value="<%= eintrag.id %>" <%= eintrag.id === raum.id ? 'selected' : '' %>><%= raumName(eintrag.nummer, eintrag.bezeichnung) %></option>
+      <% } %>
+    </select>
+  </label>
+  <button class="knopf">Wechseln</button>
+</form>
+
+<form method="post" action="/inventur/<%= inventur.id %>/raum/<%= raum.id %>" class="karte erfassen">
+  <label class="feld">
+    <span>Inventarnummer</span>
+    <input id="inventarnummer" name="inventarnummer" autofocus autocomplete="off" maxlength="50"
+           placeholder="eintippen oder scannen, dann Enter">
+  </label>
+  <div class="knoepfe">
+    <%# Nur sichtbar, wenn der Browser Strichcodes mit der Kamera erkennen kann (siehe public/scanner.js) %>
+    <button type="button" class="knopf" data-kamera-scannen hidden>Mit Kamera scannen</button>
+    <button class="knopf haupt">Erfassen</button>
+  </div>
+  <video id="kamera" playsinline muted hidden></video>
+</form>
+
+<div class="zwei-spalten">
+  <section class="karte">
+    <h2>In diesem Raum erfasst (<%= erfasst.length %>)</h2>
+    <% if (erfasst.length === 0) { %>
+      <p class="leise">Noch nichts erfasst.</p>
+    <% } else { %>
+      <div class="tabelle">
+        <table>
+          <tbody>
+            <% for (const eintrag of erfasst) { %>
+              <tr>
+                <td>
+                  <strong><%= eintrag.inventarnummer %></strong> <%= eintrag.bezeichnung ?? '' %>
+                  <br>
+                  <% if (!eintrag.geraet_id) { %>
+                    <small class="fehler">nicht im System</small>
+                  <% } else if (eintrag.soll_raum !== raum.nummer) { %>
+                    <small class="fehler">gehört laut SAP in Raum <%= eintrag.soll_raum %></small>
+                  <% } else if (eintrag.herkunft !== 'sap') { %>
+                    <small class="leise">✓ hier richtig, aber nicht in SAP</small>
+                  <% } else { %>
+                    <small class="ok">✓ gehört hierher</small>
+                  <% } %>
+                </td>
+                <td class="aktionen">
+                  <form method="post" action="/inventur/<%= inventur.id %>/erfassung/<%= eintrag.id %>/entfernen"
+                        data-bestaetigen="<%= eintrag.inventarnummer %> wieder entfernen?">
+                    <button class="knopf">Entfernen</button>
+                  </form>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </section>
+
+  <section class="karte">
+    <h2>Laut Soll hier, noch nicht gefunden (<%= nochOffen.length %>)</h2>
+    <% if (nochOffen.length === 0) { %>
+      <p class="leise">Alle Geräte dieses Raumes sind erfasst.</p>
+    <% } else { %>
+      <ul class="liste-schlicht">
+        <% for (const geraet of nochOffen) { %>
+          <li><a href="/geraete/<%= geraet.id %>"><%= geraet.inventarnummer %></a> <%= geraet.bezeichnung %></li>
+        <% } %>
+      </ul>
+    <% } %>
+  </section>
+</div>
+
+<script src="/scanner.js"></script>
+<%- include('../teile/fuss') %>

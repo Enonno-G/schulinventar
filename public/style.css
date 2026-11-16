@@ -155,8 +155,13 @@ a {
   margin-bottom: 1rem;
 }
 
-.seitenkopf h1 {
+.seitenkopf h1,
+.seitenkopf h2 {
   margin: 0;
+}
+
+.karte .seitenkopf {
+  margin-bottom: 0.75rem;
 }
 
 .pfad {
@@ -456,6 +461,123 @@ tr.inaktiv td {
 .aenderungen {
   margin: 0;
   padding-left: 1rem;
+}
+
+/* Anzahl gefundener Geräte links, „Als CSV herunterladen“ rechts */
+.ergebniszeile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.ergebniszeile p {
+  margin: 0;
+}
+
+/* ---------- Belege und Export ---------- */
+
+/* Die lange Prüfsumme darf umbrechen, sonst wird die Seite am Handy zu breit */
+.pruefsumme {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.zuordnen {
+  margin-top: 1rem;
+}
+
+.exportliste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------- SAP-Import, Inventur, Soll-Ist, Ausleihe ---------- */
+
+/* Kästchen mit großen Zahlen, z. B. „12 neu“, „3 fehlerhaft“ */
+.zahlen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.zahl-kasten {
+  min-width: 8rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rand);
+  border-radius: var(--rundung);
+  background: var(--flaeche);
+  color: var(--leise);
+}
+
+.zahl-kasten strong {
+  display: block;
+  font-size: 1.5rem;
+  color: var(--text);
+}
+
+.zahl-kasten.auffaellig {
+  border-color: var(--rot);
+  background: var(--rot-hell);
+}
+
+.ok {
+  color: var(--gruen);
+}
+
+details summary {
+  cursor: pointer;
+  color: var(--blau);
+}
+
+details .tabelle {
+  margin-top: 0.5rem;
+}
+
+/* Inventur: Raum wechseln und das große Eingabefeld für die Inventarnummer */
+.raumwahl {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.raumwahl .feld {
+  flex: 1;
+  max-width: 400px;
+}
+
+.erfassen input {
+  font-size: 1.4rem;
+  min-height: 3.25rem;
+}
+
+.erfassen .knoepfe {
+  margin-top: 0.75rem;
+}
+
+#kamera {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 0.75rem;
+  border-radius: var(--rundung);
+}
+
+.liste-schlicht {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+tr.ueberfaellig td {
+  background: var(--rot-hell);
 }
 
 /* ---------- Anmeldeseite ---------- */
